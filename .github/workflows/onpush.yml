@@ -1,0 +1,11 @@
+name: on-push
+on: [push]
+jobs:
+  debug-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: mkdir build
+      - run: cmake -DCMAKE_BUILD_TYPE=Debug -S . -B build
+      - run: cmake --build build
+      - run: build/utest

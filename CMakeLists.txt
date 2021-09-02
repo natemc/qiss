@@ -14,7 +14,7 @@ target_compile_options(project_options INTERFACE
     -ferror-limit=1
     $<$<CONFIG:RELEASE>:-ffast-math>
 # TODO fix for non-x86 targets
-    $<$<CONFIG:RELEASE>:-maxv2>
+    $<$<CONFIG:RELEASE>:-mavx2>
 )
 
 add_library(project_warnings INTERFACE)
