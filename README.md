@@ -20,4 +20,4 @@ My goal for qiss is to have fun learning. Here are a few components I've found e
 * An adaptive radix sort
 * A robin-hood hash table
 * A buddy allocator
-* A compiler using a table-based (rather than tree-based) AST. This based on Aaron Hsu's dissertation, [A Data Parallel Compiler Hosted on the GPU](https://scholarworks.iu.edu/dspace/bitstream/handle/2022/24749/Hsu%20Dissertation.pdf?sequence=1&isAllowed=y)
+* A compiler using a table-based (rather than tree-based) AST. This based on Aaron Hsu's dissertation, [A Data Parallel Compiler Hosted on the GPU](https://scholarworks.iu.edu/dspace/bitstream/handle/2022/24749/Hsu%20Dissertation.pdf?sequence=1&isAllowed=y).
