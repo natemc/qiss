@@ -1,4 +1,5 @@
 #include <prim.h>
+#include <bits.h>
 #include <cmath>
 #include <cstring>
 #include <ctime>
@@ -18,19 +19,14 @@ namespace {
 // https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition
 bool fuzzy_match(double x, double y) {
     constexpr int64_t ULPs = 4;
-    union Pun {
-        explicit Pun(double x): d(x) {}
-        double  d;
-        int64_t i;
-    };
     return isnan(x) && isnan(y)
         || fabs(x - y) <= std::numeric_limits<double>::epsilon()
-        || (0 < x) == (0 < y) && abs(Pun(x).i - Pun(y).i) <= ULPs;
+        || (0 < x) == (0 < y) && abs(bitcast<int64_t>(x) - bitcast<int64_t>(y)) <= ULPs;
 }
 TEST_CASE("fuzzy match should be much better tested") {
     CHECK(fuzzy_match(0, 0));
 
-    double sum = 0;
+    [[maybe_unused]] double sum = 0;
     for (int i = 0; i < 10; ++i) sum += 0.1;
     CHECK(sum != 1.0);
     CHECK(fuzzy_match(sum, 1.0));

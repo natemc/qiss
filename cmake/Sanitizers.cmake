@@ -20,7 +20,7 @@ function(enable_sanitizers project_name)
       list(APPEND SANITIZERS "leak")
     endif()
 
-    option(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR "Enable undefined behavior sanitizer" FALSE)
+    option(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR "Enable undefined behavior sanitizer" TRUE)
     if(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR)
       list(APPEND SANITIZERS "undefined")
     endif()

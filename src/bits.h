@@ -27,9 +27,9 @@ constexpr inline bool is_power_of_2(uint64_t x) {
     return __builtin_popcountll(x) == 1;
 }
 
-inline uint64_t log2(uint64_t x) {
+inline int log2u64(uint64_t x) {
     assert(x);
-    return uint64_t(63 - clz(x));
+    return 63 - clz(x);
 }
 
 inline uint64_t round_up_to_power_of_2(uint64_t x) {

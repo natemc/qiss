@@ -3,7 +3,7 @@
 
 Exception::Exception(const char* s) {
     std::size_t i = 0;
-    for (; s[i] && i < sizeof err - 1; ++i) err[i] = s[i];
+    for (; i < sizeof err - 1 && s[i]; ++i) err[i] = s[i];
     err[i] = '\0';
 }
 

@@ -1,8 +1,11 @@
 #include <buddy_allocator.h>
 #include <algorithm>
 #include <bits.h>
+#include <cassert>
+#include <cstddef>
 #include <cstring>
 #include <doctest.h>
+#include <new>
 //#include <primio.h>
 #include <system_alloc.h>
 #include <unistd.h>
@@ -72,18 +75,18 @@ std::pair<void*, uint64_t> BuddyAllocator::alloc(uint64_t size) {
     }
     assert(block->bucket() == bucket);
     block->mark_used();
-    const uint64_t bytes_allocated = bucket_to_bytes(bucket);
-    allocated += bytes_allocated;
+    const uint64_t allocated_bytes = bucket_to_bytes(bucket);
+    allocated += allocated_bytes;
 //    H(1) << "LIST " << block << "\trequested: "
 //              << std::setw(4) << size
 //              << "\tneeded: " << bytes
 //              << "\tbucket: " << int(block->bucket())
-//              << "\tbucket size: " << std::setw(4) << bytes_allocated
+//              << "\tbucket size: " << std::setw(4) << allocated_bytes
 //              << "\tmeta: " << std::hex << block->meta << std::dec
 //              << "\tx: " << (&block->x) << '\n' << flush;
 //    print_list(H(1) << "//// free list " << int(bucket) << ": ",
 //               free_table[bucket]) << flush;
-    return {block->x, bytes_allocated - offsetof(Block, x)};
+    return {block->x, allocated_bytes - offsetof(Block, x)};
 }
 
 void BuddyAllocator::free(void* p) {
@@ -117,9 +120,9 @@ std::pair<void*, uint64_t> BuddyAllocator::grow(void* p, uint64_t new_size) {
         buddies[b]->~Block();
     }
     block->set_bucket(bucket);
-    const uint64_t bytes_allocated = bucket_to_bytes(bucket);
-    allocated += bytes_allocated - bucket_to_bytes(original_bucket);
-    return {block->x, bytes_allocated - offsetof(Block, x)};
+    const uint64_t allocated_bytes = bucket_to_bytes(bucket);
+    allocated += allocated_bytes - bucket_to_bytes(original_bucket);
+    return {block->x, allocated_bytes - offsetof(Block, x)};
 }
 
 uint64_t BuddyAllocator::size(const void* p) const {
@@ -183,7 +186,7 @@ BuddyAllocator::Block* BuddyAllocator::find_buddy(Block* block, bucket_t bucket)
     const std::size_t offset = std::size_t(x - b);
     void* const y = ctz(offset) < ctz(offset + bytes)? x - bytes : x + bytes;
     Block* const      buddy  = static_cast<Block*>(y);
-    assert(buddy->region() == b);
+    assert(std::as_const(buddy)->region() == b);
     return buddy;
 }
 

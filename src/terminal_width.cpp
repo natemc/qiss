@@ -1,5 +1,6 @@
 #include <terminal_width.h>
 #include <sys/ioctl.h>
+#include <sys/ttycom.h>
 
 int terminal_width() {
     winsize w;

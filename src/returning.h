@@ -1,3 +1,3 @@
 #pragma once
 
-#define RETURNING(E, B4) do { const auto r(E); B4; return r; } while(false)
+#define RETURNING(E, B4) do { const auto r_(E); B4; return r_; } while(false)

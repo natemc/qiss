@@ -168,13 +168,17 @@ H operator<<(H h, F x) { return h << F::rep(x); }
 H operator<<(H h, H x) { return h << H::rep(x); }
 
 H operator<<(H h, I x) {
-    if (x.is_null()) return h << "0N";
-    return h << I::rep(x);
+    return x.is_null()? h << "0Ni"
+         : x == WI    ? h << "0Wi"
+         : x == -WI   ? h << "-0Wi"
+         : /* else */   h << I::rep(x);
 }
 
 H operator<<(H h, J x) {
-    if (x.is_null()) return h << "0N";
-    return h << J::rep(x);
+    return x.is_null()? h << "0N"
+         : x == WJ    ? h << "0W"
+         : x == -WJ   ? h << "-0W"
+         : /* else */   h << J::rep(x);
 }
 
 H operator<<(H h, S x) { return h << '`' << c_str(x); }

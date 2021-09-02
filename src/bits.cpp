@@ -17,11 +17,11 @@ TEST_CASE("is_power_of_2") {
     CHECK(is_power_of_2(4));
 }
 
-TEST_CASE("log2") {
-    CHECK(0 == log2(1));
-    CHECK(1 == log2(2));
-    CHECK(1 == log2(3));
-    CHECK(2 == log2(4));
+TEST_CASE("log2u64") {
+    CHECK(0 == log2u64(1));
+    CHECK(1 == log2u64(2));
+    CHECK(1 == log2u64(3));
+    CHECK(2 == log2u64(4));
 }
 
 TEST_CASE("round_up_to_power_of_2") {

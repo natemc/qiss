@@ -1,9 +1,11 @@
 #include <output.h>
 #include <algorithm>
+#include <cassert>
 #include <charconv>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+#include <primio.h>
 
 namespace {
     time_t date2unix(D x) { return 86400 * (D::rep(x) + 10957); }
@@ -39,6 +41,9 @@ std::size_t write_byte::write(char* buf, X x) {
 
 std::size_t write_date::write(char* buf, D x) {
     if (x.is_null()) return rite(buf, "0Nd");
+    // Do these even make sense? Have any use?
+    if (x == WD) return rite(buf, "0Wd");
+//    if (x == -WD) return rite(buf, "-0Wd");
 
     // TODO? k works for dates before 1900, but this does NOT.
     time_t t = date2unix(x);
@@ -77,8 +82,11 @@ std::size_t write_pointer::write(char* buf, const void* x) {
 
 std::size_t write_time::write(char* buf, T x) {
     if (x.is_null()) return rite(buf, "0Nt");
+    if (x == WT) return rite(buf, "0Wt");
+    if (x == -WT) return rite(buf, "-0Wt");
     const T::rep r(x);
     const int h  = r / 3600000;
+    assert(0 <= h && h <= 99);
     const int m  = r / 60000 % 60;
     const int s  = r / 1000 % 60;
     const int ms = r % 1000;

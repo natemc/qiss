@@ -66,9 +66,9 @@ std::pair<bool, D> parse_date::operator()(const C* first, const C* last) const {
     const C* const p = first;
     const C* const q = last - (*(last - 1) == C('d'));
     if (*p == C('0') && p + 2 == q && !isdigit(C::rep(p[1]))) {
-        return p[1] == C('N')? std::pair(first == p, ND)
-            :  p[1] == C('W')? std::pair(true      , WD)
-            :  /* else */      std::pair(false     , ND);
+        return p[1] == C('N')? std::pair(true , ND)
+            :  p[1] == C('W')? std::pair(true , WD)
+            :  /* else */      std::pair(false, ND);
     }
 
     if (p + 8 == q) {

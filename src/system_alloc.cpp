@@ -1,6 +1,7 @@
 #include <system_alloc.h>
 #include <bits.h>
 #include <cassert>
+#include <cstdint>
 #include <cstdlib>
 #include <sys/mman.h>
 #include <unistd.h>

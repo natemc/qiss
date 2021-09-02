@@ -1,20 +1,24 @@
 #include <object.h>
 #include <algorithm>
-//#include <count.h>
+#include <count.h>
 #include <fixed_size_allocator.h>
 #include <o.h>
 
 namespace {
+    template <class X> using OT = ObjectTraits<X>;
+
     template <class F, class X> bool all(F&& f, const List<X>* x) {
         return std::all_of(x->begin(), x->end(), std::forward<F>(f));
     }
 
-//    bool is_rectangular(const List<O>* x) {
-//        return all([=](O e){ return e.get()->n == (*x)[0].get()->n; }, x);
-//    }
+    bool is_rectangular(const List<O>* x) {
+        return all([=](O e){ return e.get()->n == (*x)[0].get()->n; }, x);
+    }
 
-    template <class X> using OT = ObjectTraits<X>;
-    FixedSizeAllocator<Object> oalloc;
+    using Alloc = FixedSizeAllocator<Object>;
+    typename std::aligned_storage<sizeof(Alloc), alignof(Alloc)>::type buf;
+    Alloc& oalloc = reinterpret_cast<Alloc&>(buf);
+    uint64_t init_counter;
 
     Object* alloc_object(Type type) {
         Object* const o = oalloc.alloc();
@@ -24,6 +28,11 @@ namespace {
         o->type = type;
         return o;
     }
+}
+
+namespace qiss_object_detail {
+    QissObjectInit:: QissObjectInit() { if (!init_counter++) new (&oalloc) Alloc; }
+    QissObjectInit::~QissObjectInit() { if (!--init_counter) oalloc.~Alloc(); }
 }
 
 Object* alloc_atom(Type t) {
@@ -37,7 +46,7 @@ Object* generic_null() {
 }
 
 Dict* make_dict(Object* k, Object* v) {
-//    assert(count(O(addref(k))).atom<J>() == count(O(addref(v))).atom<J>());
+    assert(count(O(addref(k))).atom<J>() == count(O(addref(v))).atom<J>());
     const auto [p, sz] = qiss_alloc(sizeof(Dict));
     Dict* const d = new (p) Dict;
     d->a    = Attr::none;
@@ -54,7 +63,7 @@ Object* make_table(Dict* x) {
     assert(dk(x)->type == OT<S>::typet());
     assert(dv(x)->type == OT<O>::typet());
     assert(dk(x)->n == dv(x)->n);
-//    assert(is_rectangular(OT<O>::list(dv(x))));
+    assert(is_rectangular(OT<O>::list(dv(x))));
     Object* const r = alloc_object(Type('+'));
     r->dict = x;
     return r;

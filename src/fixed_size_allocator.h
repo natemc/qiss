@@ -1,13 +1,14 @@
 #pragma once
 
-#include <bit>
 #include <bits.h>
 #include <cassert>
 #include <cstddef>
-#include <linked_list_len.h>
+#include <cstdint>
+//#include <linked_list_len.h>
 #include <memory>
+#include <new>
 #include <system_alloc.h>
-#include <utility>
+#include <type_traits>
 
 template <class X>
 struct FixedSizeAllocator {
@@ -39,12 +40,12 @@ struct FixedSizeAllocator {
     void free(X* x) {
         Block* const b = reinterpret_cast<Block*>(x);
         x->~X();
-        Page*  const p = page_from_block(b);
+        Page* const p = page_from_block(b);
         if (!--p->n) {
             return_page(p);
         } else {
             if      (!p->free)           move_page(p, &full    , &non_full);
-            else if (p->n < non_full->n) move_page(p, &non_full, &non_full);
+            else if (p->n < non_full->n) move_page(p, &non_full, &non_full); // NOLINT
             b->next = p->free;
             p->free = b;
         }
@@ -106,11 +107,12 @@ private:
         }
         assert(!prev->next);
 
-        p->free       = static_cast<Block*>(first);
-        p->n          = 0;
-        p->prev       = nullptr;
-        p->next       = non_full;
-        non_full      = p;
+        p->free     = static_cast<Block*>(first);
+        p->n        = 0;
+        p->prev     = nullptr;
+        p->next     = non_full;
+        p->reserved = 0;
+        non_full    = p;
         return p;
     }
 

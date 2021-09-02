@@ -126,13 +126,16 @@ L<C>& operator<<(L<C>& buf, H x) {
 }
 
 L<C>& operator<<(L<C>& buf, I x) {
-    if (x == NI) return buf << "0N";
-    return buf << I::rep(x);
+    return x.is_null()? buf << "0Ni"
+         : x == WI    ? buf << "0Wi"
+         : x == -WI   ? buf << "-0Wi"
+         : /* else */   buf << I::rep(x);
 }
 
 L<C>& operator<<(L<C>& buf, J x) {
     if (x.is_null()) return buf << "0N";
     if (x < J(0)) { buf << '-'; x = -x; }
+    if (x == WJ) return buf << "0W";
     return buf << std::size_t(J::rep(x));
 }
 
@@ -180,7 +183,7 @@ L<C> trim(L<C> buf) {
     const auto left      = std::find_if(buf.begin(), buf.end(), not_space);
     if (left == buf.end()) return L<C>();
     const auto right     = std::find_if(buf.rbegin(), buf.rend(), not_space);
-    assert(right != buf.rend());
+    assert(right != std::as_const(buf).rend());
 
     if (!buf.mine()) return L<C>(left, right.base());
     std::rotate(buf.begin(), left, right.base());

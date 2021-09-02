@@ -1,17 +1,17 @@
 #pragma once
 
 #include <algorithm>
-//#include <in.h>
+#include <in.h>
 #include <initializer_list>
 #include <iterator>
 #include <memory>
-//#include <not.h>
+#include <not.h>
 #include <o.h>
-//#include <relop.h>
+#include <relop.h>
 #include <utility>
-//#include <where.h>
+#include <where.h>
 
-template <class Z> struct L {
+template <class Z> struct [[nodiscard]] L {
     template <class X> using OT = ObjectTraits<X>;
 
     using value_type             = Z;
@@ -45,11 +45,14 @@ template <class Z> struct L {
         requires std::is_constructible_v<value_type, decltype(*std::declval<I>())>
     L(I first, I last): L(make_empty_list<value_type>(std::distance(first, last)))
     {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-int-conversion"
         std::transform(first, last, std::back_inserter(*this),
                        [](const auto& e){ return value_type(e); });
+#pragma clang diagnostic pop
     }
     L(const L& x_): x(addref(x_.x)) {}
-    L(L&& x_): x(x_.release()) {}
+    L(L&& x_) noexcept: x(x_.release()) {}
     ~L() { deref(x); }
     L& operator=(L x_) { std::swap(x, x_.x); return *this; }
 
@@ -57,7 +60,7 @@ template <class Z> struct L {
     operator O() const &  { return O(L(*this).release()); }
     operator O()       && { return O(release()); }
 
-    size_type capacity () const { return list_capacity(x); }
+    size_type capacity () const { return list_capacity(get()); }
     bool      empty    () const { return size() == 0; }
     bool      is_sorted() const { return (x->a & Attr::sorted) != Attr::none; }
     bool      mine     () const { return !x->r; }
@@ -79,16 +82,17 @@ template <class Z> struct L {
     template <class I> L operator[](L<I> j) const {
         L r;
         r.reserve(j.size());
-        for (I i: j) r.emplace_back((*this)[i]);
+        std::transform(j.begin(), j.end(), std::back_inserter(r),
+                       [&](I k){ return (*this)[k]; });
         return r;
     }
 
-/*    L<B> operator!() &  { return L<B>(not_(*this)); }
+    L<B> operator!() &  { return L<B>(not_(*this)); }
     L<B> operator!() && { return L<B>(not_(std::move(*this))); }
     L<I> operator&() &  { return L<I>(wherei(*this)); }
     L<I> operator&() && { return L<I>(wherei(std::move(*this))); }
     L<B> in(L y) &  { return L<B>(::in(*this           , std::move(y))); }
-    L<B> in(L y) && { return L<B>(::in(std::move(*this), std::move(y))); }*/
+    L<B> in(L y) && { return L<B>(::in(std::move(*this), std::move(y))); }
 
     iterator       begin  ()       { return get()->begin(); }
     iterator       end    ()       { return begin() + size(); }
@@ -135,10 +139,11 @@ template <class Z> struct L {
         --get()->n;
     }
     template <class... A> requires std::is_constructible_v<value_type, A...>
-    void emplace_back(A&&... a) {
+    reference emplace_back(A&&... a) {
         reserve(size() + 1);
         new (end()) value_type(std::forward<A>(a)...);
         ++get()->n;
+        return back();
     }
     void push_back(value_type e) {
         reserve(size() + 1);
@@ -167,7 +172,6 @@ private:
     friend struct O;
 };
 
-/*
 template <class X> L<X> operator&(L<X> x, L<X> y) {
     return L<X>(min(std::move(x), std::move(y)));
 }
@@ -175,4 +179,3 @@ template <class X> L<X> operator&(L<X> x, L<X> y) {
 template <class X> L<X> operator|(L<X> x, L<X> y) {
     return L<X>(max(std::move(x), std::move(y)));
 }
-*/

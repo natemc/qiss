@@ -9,11 +9,11 @@ struct BuddyAllocator {
     BuddyAllocator(const BuddyAllocator&)            = delete;
     BuddyAllocator& operator=(const BuddyAllocator&) = delete;
 
-    std::pair<void*, uint64_t> alloc(uint64_t size);
-    void                       free (void* p);
-    std::pair<void*, uint64_t> grow (void* p, uint64_t new_size);
-    uint64_t                   size (const void* p)              const;
-    uint64_t                   used ()                           const;
+    [[nodiscard]] std::pair<void*, uint64_t> alloc(uint64_t size);
+    void                                     free (void* p);
+    [[nodiscard]] std::pair<void*, uint64_t> grow (void* p, uint64_t new_size);
+    [[nodiscard]] uint64_t                   size (const void* p)              const;
+    [[nodiscard]] uint64_t                   used ()                           const;
   
 private:
     using bucket_t = uint8_t;

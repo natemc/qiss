@@ -4,7 +4,7 @@
 #include <utility>
 
 // Untyped Key-Value: smart pointer to a dict whose k & v types we don't know
-struct UKV {
+struct [[nodiscard]] UKV {
     using size_type = index_t;
 
     explicit UKV(Object* x_): x(x_) { assert(x_); assert(is_dict(x_)); }
@@ -12,8 +12,10 @@ struct UKV {
     explicit UKV(Dict* x_): x(x_) { assert(x_); }
     UKV(O k, O v): x(make_dict(k.release(), v.release())) {}
     UKV(const UKV& x_): x(addref(x_.x)) {}
-    UKV(UKV&& x_): x(x_.release()) {}
-    ~UKV() { deref(x); }
+    UKV(UKV&& x_) noexcept: x(x_.release()) {}
+    // clang-tidy says I'm deref'ing an uninitialized value (x) after move,
+    // but x is always initialized, even after move
+    ~UKV() { deref(x); } // NOLINT
     UKV& operator=(UKV x_) { std::swap(x, x_.x); return *this; }
 
     operator O()       &  { return O(addref(x)); }
