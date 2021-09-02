@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bits.h>
-#include <concepts>
 #include <iaddr.h>
 #include <cstdint>
 #include <index.h>
@@ -151,12 +150,6 @@ private:
     uint64_t hash_cache; // just an idea (we do need the bytes to align first)
     char     first[];
 };
-
-template <class X>
-concept has_rep_type_member = requires(X) { typename X::rep; };
-static_assert(has_rep_type_member<J>);
-static_assert(!has_rep_type_member<Object>);
-static_assert(!has_rep_type_member<Object*>);
 
 struct Dict: Object {
     Object* k;
