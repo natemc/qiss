@@ -11,7 +11,6 @@ flex_target(lexer src/qiss.l "${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c"
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_20)
 target_compile_options(project_options INTERFACE
-    -ferror-limit=1
     $<$<CONFIG:RELEASE>:-ffast-math>
 # TODO fix for non-x86 targets
     $<$<CONFIG:RELEASE>:-mavx2>

@@ -54,6 +54,7 @@ function(set_project_warnings project_name)
       -Wno-missing-braces
       -Wno-missing-field-initializers
       -Wno-unused-function
+      -ferror-limit=1
   )
 
   if(WARNINGS_AS_ERRORS)
