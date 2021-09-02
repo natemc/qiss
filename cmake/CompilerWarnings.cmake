@@ -54,7 +54,6 @@ function(set_project_warnings project_name)
       -Wno-missing-braces
       -Wno-missing-field-initializers
       -Wno-unused-function
-      -ferror-limit=1
   )
 
   if(WARNINGS_AS_ERRORS)
@@ -69,6 +68,11 @@ function(set_project_warnings project_name)
       -Wduplicated-branches # warn if if / else branches have duplicated code
       -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
       -Wuseless-cast # warn if you perform a cast to the same type
+  )
+
+  set(CLANG_WARNINGS
+      ${CLANG_WARNINGS}
+      -ferror-limit=1
   )
 
   if(MSVC)
