@@ -33,11 +33,11 @@ inline bool operator!=(TYPE x, TYPE y) { return !(x == y); }
 PRIM(TYPE, REP, x == y.x, x < y.x, NULLTEST)
 
 #define NEVER_NULL false
-PRIM_EQ_LT(B, uint8_t, NEVER_NULL);
-PRIM_EQ_LT(C, char   , x == ' '  );
-PRIM_EQ_LT(H, int    , NEVER_NULL);
+PRIM_EQ_LT(B, uint8_t, NEVER_NULL)
+PRIM_EQ_LT(C, char   , x == ' '  )
+PRIM_EQ_LT(H, int    , NEVER_NULL)
 constexpr H NH = H(std::numeric_limits<H::rep>::min());
-PRIM_EQ_LT(X, uint8_t, NEVER_NULL);
+PRIM_EQ_LT(X, uint8_t, NEVER_NULL)
 #undef NEVER_NULL
 
 PRIM_EQ_LT(D, int32_t, x == std::numeric_limits<rep>::min())

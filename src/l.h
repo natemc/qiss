@@ -45,11 +45,13 @@ template <class Z> struct [[nodiscard]] L {
         requires std::is_constructible_v<value_type, decltype(*std::declval<I>())>
     L(I first, I last): L(make_empty_list<value_type>(std::distance(first, last)))
     {
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wimplicit-int-conversion"
         std::transform(first, last, std::back_inserter(*this),
                        [](const auto& e){ return value_type(e); });
 #pragma clang diagnostic pop
+#endif
     }
     L(const L& x_): x(addref(x_.x)) {}
     L(L&& x_) noexcept: x(x_.release()) {}
