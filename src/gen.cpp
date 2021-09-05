@@ -120,7 +120,7 @@ template <> struct Immediate<Z> { static constexpr Opcode value = Opcode::O; }
         write(code, Opcode::count);
         write(code, Opcode::sub);
         write(code, Opcode::bzero);
-        X* const out = code.end();
+        X::rep* const out = reinterpret_cast<X::rep*>(code.end());
         write(code, iaddr_t(0));
         write(code, Opcode::dup);
         write(code, Opcode::dupnth, X(3));
@@ -436,17 +436,18 @@ void gen(KV<S,O>& module, O ast_, bool trace) {
         write(code, Opcode::ret);
     }
     for (I c: calls) {
-        I block;
+        I::rep block;
         memcpy(&block, &code[c] + 1, sizeof block);
-        assert(blocks.has(block));
-        memcpy(&code[c] + 1, &blocks[block], sizeof(I));
+        assert(blocks.has(I(block)));
+        X::rep* const out = reinterpret_cast<X::rep*>(&code[c] + 1);
+        memcpy(out, &blocks[I(block)], sizeof(I));
     }
     for (I proc: procs) {
         // proc is an index (into code) of the pushm instruction referring
         // to a proc (stored in statics) whose entry we need to patch.
-        I static_index;
+        I::rep static_index;
         memcpy(&static_index, &code[proc] + 1, sizeof static_index);
-        O& o = statics[static_index];
+        O& o = statics[I(static_index)];
         I block(I::rep(o->proc.entry));
         assert(blocks.has(block));
         memcpy(&o->proc.entry, &blocks[block], sizeof(I));

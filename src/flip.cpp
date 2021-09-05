@@ -29,7 +29,8 @@ namespace {
     O ith(O x, index_t i) {
 #define CS(X) case OT<X>::typei(): return O(L<X>(std::move(x))[i])
         switch (int(x->type)) {
-        CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J); CS(S); CS(T); CS(X); CS(O);
+        CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J); CS(S); CS(T); CS(X);
+        case OT<O>::typei(): return L<O>(std::move(x))[i];
         default : throw Exception("nyi: flip (+) for type");
         }
 #undef CS

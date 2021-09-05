@@ -21,7 +21,7 @@ struct Lexer {
 
     Token next() { return Token(yylex(scanner)); }
 
-    size_t      len () const { return yyget_leng  (scanner); }
+    int         len () const { return yyget_leng  (scanner); }
     int         line() const { return yyget_lineno(scanner); }    
     const char* text() const { return yyget_text  (scanner); }
 
@@ -32,7 +32,8 @@ protected:
 struct StringLexer: Lexer {
     explicit StringLexer(const L<C>& s) {
         const C::rep* const b = reinterpret_cast<const C::rep*>(s.begin());
-        buf = yy_scan_bytes(b, yy_size_t(s.size()), scanner);
+//        buf = yy_scan_bytes(b, yy_size_t(s.size()), scanner);
+        buf = yy_scan_bytes(b, int(s.size()), scanner);
     }
     ~StringLexer() { yy_delete_buffer(buf, scanner); }
 

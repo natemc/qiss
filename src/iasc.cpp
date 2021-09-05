@@ -50,7 +50,7 @@ namespace {
 
     L<J> iasc_(const L<F>& x) {
         const auto     key_ = [](F e){ // http://stereopsis.com/radix.html
-            const uint64_t& i = reinterpret_cast<uint64_t&>(e);
+            const uint64_t i = bitcast<uint64_t>(e);
             return i ^ (uint64_t(-int64_t(i>>63)) | 1ull<<63);
         };
         const auto     mm   = std::minmax_element(

@@ -11,7 +11,7 @@ namespace {
     std::size_t g_heap;
 
     void default_oom_handler() {
-        write(2, "'wsfull", 7);
+        [[maybe_unused]] const ssize_t written = write(2, "'wsfull", 7);
         exit(1);
     }
 

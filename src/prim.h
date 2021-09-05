@@ -80,7 +80,7 @@ inline I operator/(I x, I y) { return I::rep(y)? I(I::rep(x) / I::rep(y)) : NI; 
 inline I operator%(I x, I y) { return I::rep(y)? I(I::rep(x) % I::rep(y)) : NI; }
 
 bool fuzzy_match(double x, double y);
-PRIM(F, double, fuzzy_match(x, y.x), x < y.x, isnan(x))
+PRIM(F, double, fuzzy_match(x, y.x), x < y.x, std::isnan(x))
 constexpr F NF = F(std::numeric_limits<F::rep>::quiet_NaN());
 constexpr F WF = F(std::numeric_limits<F::rep>::infinity());
 inline F operator-(F x) { return F(-F::rep(x)); }
@@ -90,7 +90,7 @@ inline F operator+(F x, F y) { return F(F::rep(x) + F::rep(y)); }
 inline F operator/(F x, F y) { return F(F::rep(x) / F::rep(y)); }
 
 bool symless(int32_t, int32_t);
-PRIM(S, int32_t, x == y.x, symless(x, y.x), x == 0);
+PRIM(S, int32_t, x == y.x, symless(x, y.x), x == 0)
 constexpr S NS = S(0);
 
 PRIM_EQ_LT(T, int32_t, x == std::numeric_limits<rep>::min())
@@ -140,19 +140,19 @@ inline F operator+(I x, F y) { return F(I::rep(x)) + y; }
 inline F operator-(I x, F y) { return F(I::rep(x)) - y; }
 inline F operator*(I x, F y) { return F(I::rep(x)) * y; }
 inline F operator/(I x, F y) { return F(I::rep(x)) / y; }
-inline F operator+(J x, F y) { return F(J::rep(x)) + y; }
-inline F operator-(J x, F y) { return F(J::rep(x)) - y; }
-inline F operator*(J x, F y) { return F(J::rep(x)) * y; }
-inline F operator/(J x, F y) { return F(J::rep(x)) / y; }
+inline F operator+(J x, F y) { return F(F::rep(J::rep(x))) + y; }
+inline F operator-(J x, F y) { return F(F::rep(J::rep(x))) - y; }
+inline F operator*(J x, F y) { return F(F::rep(J::rep(x))) * y; }
+inline F operator/(J x, F y) { return F(F::rep(J::rep(x))) / y; }
 
 inline F operator+(F x, I y) { return x + F(I::rep(y)); }
 inline F operator-(F x, I y) { return x - F(I::rep(y)); }
 inline F operator*(F x, I y) { return x * F(I::rep(y)); }
 inline F operator/(F x, I y) { return x / F(I::rep(y)); }
-inline F operator+(F x, J y) { return x + F(J::rep(y)); }
-inline F operator-(F x, J y) { return x - F(J::rep(y)); }
-inline F operator*(F x, J y) { return x * F(J::rep(y)); }
-inline F operator/(F x, J y) { return x / F(J::rep(y)); }
+inline F operator+(F x, J y) { return x + F(F::rep(J::rep(y))); }
+inline F operator-(F x, J y) { return x - F(F::rep(J::rep(y))); }
+inline F operator*(F x, J y) { return x * F(F::rep(J::rep(y))); }
+inline F operator/(F x, J y) { return x / F(F::rep(J::rep(y))); }
 
 inline I operator+(B x, I y) { return I(B::rep(x)) + y; }
 inline I operator-(B x, I y) { return I(B::rep(x)) - y; }
@@ -187,8 +187,8 @@ inline J operator*(J x, I y) { return x * J(I::rep(y)); }
 inline J operator/(J x, I y) { return x / J(I::rep(y)); }
 inline J operator%(J x, I y) { return x % J(I::rep(y)); }
 
-inline X& operator+=(X& x, X y) { return x = X(X::rep(x) + X::rep(B::rep(y))); }
-inline X& operator+=(X& x, B y) { return x += X(X::rep(B::rep(y))); }
+inline X& operator+=(X& x, X y) { return x = X(X::rep(x) + B::rep(y)); }
+inline X& operator+=(X& x, B y) { return x += X(B::rep(y)); }
 inline X operator+(X x, int y) { return X(X::rep(X::rep(x) + y)); }
 inline X operator-(X x, int y) { return X(X::rep(X::rep(x) - y)); }
 inline X operator+(X x, X   y) { return X(X::rep(x) + X::rep(y)); }

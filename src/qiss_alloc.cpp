@@ -66,8 +66,9 @@ namespace qiss_alloc_detail {
     QissAllocInit::~QissAllocInit() { if (!--init_counter) lalloc.~Alloc(); }
 }
 
-void* operator new   (std::size_t sz)          { return qiss_alloc(sz).first; }
-void  operator delete(void*       p ) noexcept { qiss_free(p); }
+void* operator new(std::size_t sz) { return qiss_alloc(sz).first; }
+void  operator delete(void* p) noexcept { qiss_free(p); }
+void  operator delete(void* p, std::size_t) noexcept { qiss_free(p); }
 
 uint64_t qiss_allocated() {
     return lalloc.used();

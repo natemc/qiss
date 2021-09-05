@@ -57,7 +57,7 @@ namespace {
 #undef CASE
                 }
             }
-            return std::move(r);
+            return r;
         }
 
         O operator()(O x) const {
@@ -177,7 +177,7 @@ namespace {
 
     X::rep parse_digit(C c) {
         return X::rep(std::find(digits, std::end(digits), tolower(C::rep(c))) - digits);
-    };
+    }
 
     bool parse_j(J::rep* j, const C* first, const C* last) {
         // TODO handle infinities, na
@@ -203,12 +203,12 @@ namespace {
                 L<Z> r(y.size());
                 std::transform(y.begin(), y.end(), r.begin(),
                     [this](O x){ return Z(This()(L<C>(x))); });
-                return std::move(r);
+                return r;
             } else {
                 L<O> r;
                 r.reserve(y.size());
                 std::transform(y.begin(), y.end(), std::back_inserter(r), *this);
-                return std::move(r);
+                return r;
             }
         }
 

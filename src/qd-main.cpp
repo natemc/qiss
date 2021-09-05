@@ -27,7 +27,7 @@ namespace {
     }
 
     X parsex(C msd, C lsd) {
-        return X(X::rep(parsex(msd)) * 16 + X::rep(parsex(lsd)));
+        return X(X::rep(X::rep(parsex(msd)) * 16 + X::rep(parsex(lsd))));
     }
 
     L<X> parsex(const L<C>& s) {

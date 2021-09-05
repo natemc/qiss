@@ -21,7 +21,8 @@ namespace {
         const char* const last = x + strlen(x);
         L<X> r;
         while (x != last) {
-            const char* const y = std::find_if(x + 1, last, std::isspace);
+            const char* const y = std::find_if(
+                x + 1, last, [](char c){ return std::isspace(c); });
             const C* const s = reinterpret_cast<const C*>(x);
             const C* const t = reinterpret_cast<const C*>(y);
             const auto [ok, a] = atom_parser(s, t);

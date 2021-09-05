@@ -29,11 +29,11 @@ BuddyAllocator::~BuddyAllocator() {
     if (allocated) {
         char buf[64];
         std::size_t i = 0;
-        for (uint64_t p = allocated; p; p /= 10, ++i) buf[i] = '0' + p % 10;
+        for (uint64_t p = allocated; p; p /= 10, ++i) buf[i] = char('0' + p % 10);
         std::reverse(buf, buf + i);
-        write(2, buf, i);
+        [[maybe_unused]] ssize_t written = write(2, buf, i);
         const char msg[] = " bytes leaked\n";
-        write(2, msg, sizeof msg);
+        written = write(2, msg, sizeof msg);
     }
     assert(allocated == 0);
 }

@@ -123,17 +123,28 @@ const X* clean(L<O>& stack, const X* ip) {
 template <class Z>
 const X* push_atom_literal(L<O>& stack, const X* ip) {
     Z x;
-    memcpy(&x, ip + 1, sizeof x);
-    stack.emplace_back(x);
+    memcpy(static_cast<void*>(&x), ip + 1, sizeof x);
+    stack.emplace_back(Z(x));
     return ip + sizeof x;
+}
+
+template <class Z>
+L<Z> list_from_bytecode(const X* ip) {
+    immlen_t n;
+    memcpy(&n, ip, sizeof n);
+    L<Z> lst(n);
+    const X* const first = ip + sizeof n;
+    const X* const last  = first + n * sizeof(Z);
+    std::transform(first, last, lst.begin(),
+                   [](X e){ return Z(typename Z::rep(X::rep(e))); });
+    return lst;
 }
 
 template <>
 const X* push_atom_literal<S>(L<O>& stack, const X* ip) {
     immlen_t n;
     memcpy(&n, ip + 1, sizeof n);
-    L<C> lst(n);
-    memcpy(lst.begin(), ip + 1 + sizeof n, n * sizeof(C));
+    L<C> lst(list_from_bytecode<C>(ip + 1));
     stack.emplace_back(sym(lst.begin(), lst.end()));
     return ip + sizeof n + n * sizeof(C);
 }
@@ -150,9 +161,7 @@ template <class Z>
 const X* push_list_literal(L<O>& stack, const X* ip) {
     immlen_t n;
     memcpy(&n, ip + 1, sizeof n);
-    L<Z> lst(n);
-    memcpy(lst.begin(), ip + 1 + sizeof n, n * sizeof(Z));
-    stack.emplace_back(std::move(lst));
+    stack.emplace_back(list_from_bytecode<Z>(ip + 1));
     return ip + sizeof n + n * sizeof(Z);
 }
 
@@ -482,7 +491,8 @@ O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
         case Opcode::each    : apply_adverb(vs, Opcode(X::rep(*ip))); break;
         case Opcode::enlist  : unop(vs, enlist);                      break;
         case Opcode::eq      : binop(vs, eq);                         break;
-        case Opcode::fdiv    : binop(vs, fdiv);                       break;
+        // ?? g++ knows about some other fdiv ??
+        case Opcode::fdiv    : binop(vs,static_cast<O(*)(O,O)>(fdiv));break;
         case Opcode::fill    : binop(vs, fill);                       break;
         case Opcode::find    : binop(vs, find);                       break;
         case Opcode::first   : unop(vs, first);                       break;

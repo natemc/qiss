@@ -63,7 +63,7 @@ namespace {
         // b:Ast::lambda=ast`type; {?[b x;x;x x]}/[ast`parent]
         L<B> b(in(ast["type"_s], std::move(types)));
         auto f = [&](L<I> x){ return L<I>(vcond(b[x], x, x[x])); };
-        return L<I>(converge_(f, L<I>(ast["parent"_s])));
+        return converge_(f, L<I>(ast["parent"_s]));
     }
 
     O nb(O x) { H(1) << " NB " << x << '\n' << flush; return x; }
@@ -79,7 +79,7 @@ namespace {
         L<X> t(ast["type"_s]);
         L<B> b(!t.in(types) & t[p].in(types)); // cppcheck-suppress clarifyCondition
         auto f = [&](L<I> x){ return L<I>(vcond(b[x], x, p[x])); };
-        return L<I>(converge_(f, start));
+        return converge_(f, start);
     }
 
     L<I> lexical_contour(KV<S,O>& ast) {
@@ -258,7 +258,7 @@ namespace {
         L<X> xr(x.size());
         L<Y> yr(x.size());
         for (index_t i = 0; i < x.size(); ++i) {
-            char* const p = reinterpret_cast<char*>(std::addressof(x[i]));
+            const char* const p = reinterpret_cast<char*>(std::addressof(x[i]));
             if constexpr(std::endian::native == std::endian::big) {
                 memcpy(std::addressof(xr[i]), p            , sizeof(X));
                 memcpy(std::addressof(yr[i]), p + sizeof(X), sizeof(Y));
@@ -318,7 +318,7 @@ namespace {
         auto frame_slots = [&](I fsz, I frm){
             return tili(fsz) - (t[frm] == Ast::lambda? pcount[frm] : I(0));
         };
-        L<I> slots(over(cat, L<I>{}, each(frame_slots, framesz, L<I>(gbc.key()))));
+        L<I> slots(over(cat, L<I>{}, each(frame_slots, framesz, gbc.key())));
         // Hsu appends a -1 to slots, but we have 0N
 
         // We can't just #'=gbc, because we need to account for frames with
@@ -344,7 +344,7 @@ namespace {
         // throw if ~e~rn.
 
         // Section 3.11 (p. 130)
-        auto scope_depth = [&, i=L<I>(gbc.key())](L<I> d) mutable {
+        auto scope_depth = [&, i=gbc.key()](L<I> d) mutable {
             L<I> up(r[i]);
             RETURNING(L<I>(d + (i != up)), i = up);
         };

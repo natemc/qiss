@@ -60,8 +60,8 @@ std::size_t write_date::write(char* buf, D x) {
 }
 
 std::size_t write_double::write(char* buf, double x) {
-    if      (isnan(x)) return rite(buf, "0n");
-    else if (isinf(x)) return x < 0? rite(buf, "-0w") : rite(buf, "0w");
+    if      (std::isnan(x)) return rite(buf, "0n");
+    else if (std::isinf(x)) return x < 0? rite(buf, "-0w") : rite(buf, "0w");
 //    std::to_chars(buf, buf + 64, x, std::chars_format::general);
     const int rc = snprintf(buf, 64, "%lg", x);
     assert(0 < rc);
@@ -69,13 +69,13 @@ std::size_t write_double::write(char* buf, double x) {
 }
 
 std::size_t write_pointer::write(char* buf, const void* x) {
-    X arr[sizeof x];
+    unsigned char arr[sizeof x];
     memcpy(arr, &x, sizeof x);
     memcpy(buf, "0x", 2);
     for (std::size_t i = 0; i < sizeof x; ++i) {
-        const X::rep v = X::rep(arr[sizeof x - i - 1]);
-        buf[2*i + 2]   = digit[v / 16];
-        buf[2*i + 3]   = digit[v % 16];
+        const auto v = arr[sizeof x - i - 1];
+        buf[2*i + 2] = digit[v / 16];
+        buf[2*i + 3] = digit[v % 16];
     }
     return 2 + sizeof(void*) * 2;
 }
@@ -104,7 +104,7 @@ std::size_t write_uint64::write(char* buf, uint64_t x) {
 
     if (x == 0) return rite(buf, "0");
     std::size_t i = 0;
-    for (uint64_t p = x; p; p /= 10, ++i) buf[i] = '0' + p % 10;
+    for (uint64_t p = x; p; p /= 10, ++i) buf[i] = char('0' + p % 10);
     std::reverse(buf, buf + i);
     return i;
 }

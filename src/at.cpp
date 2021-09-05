@@ -38,7 +38,12 @@ case TP<X,J>::LA: return O((*this)(L<X>(std::move(x)), y.atom<J>()));       \
 case TP<X,J>::LL: return   (*this)(L<X>(std::move(x)), L<J>(std::move(y))); \
 case TP<X,O>::LL: return   (*this)(L<X>(std::move(x)), L<O>(std::move(y)))
             switch (type_pair(x, y)) {
-            CS(B); CS(C); CS(D); CS(F); CS(I); CS(J); CS(S); CS(T); CS(X); CS(O);
+            CS(B); CS(C); CS(D); CS(F); CS(I); CS(J); CS(S); CS(T); CS(X);
+            case TP<O,I>::LA: return (*this)(L<O>(std::move(x)), y.atom<I>());
+            case TP<O,I>::LL: return (*this)(L<O>(std::move(x)), L<I>(std::move(y)));
+            case TP<O,J>::LA: return (*this)(L<O>(std::move(x)), y.atom<J>());
+            case TP<O,J>::LL: return (*this)(L<O>(std::move(x)), L<J>(std::move(y)));
+            case TP<O,O>::LL: return (*this)(L<O>(std::move(x)), L<O>(std::move(y)));
             default: throw Exception("nyi: @");
             }
 #undef CS

@@ -21,7 +21,7 @@ namespace {
 
         O operator()(O x, L<O> y) const {
             switch (y.size()) {
-            case 0 : return std::move(y);
+            case 0 : return y;
             case 1 : return at(x, y[0]);
             // TODO index at depth if x is a container (not a function)
             case 2 : return y[1].is_list()? eachR(at, at(std::move(x), y[0]), y[1])

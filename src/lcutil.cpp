@@ -19,6 +19,7 @@ L<C>& operator<<(L<C>& buf, Adverb x) {
     case Adverb::over : return buf << '/';
     case Adverb::prior: return buf << "':";
     case Adverb::scan : return buf << "\\";
+    default           : assert(false); return buf;
     }
 }
 
@@ -87,9 +88,13 @@ L<C>& operator<<(L<C>& buf, uint32_t x) {
     return write_uint64(buf, x);
 }
 
+#ifndef __GNUG__
+// TODO need to test if std::is_same_v<uin64_t, std::size_t>
+// or just make one of them unnecessary
 L<C>& operator<<(L<C>& buf, uint64_t x) {
     return write_uint64(buf, x);
 }
+#endif
 
 L<C>& operator<<(L<C>& buf, B x) {
     return buf << "01"[B::rep(x)] << 'b';

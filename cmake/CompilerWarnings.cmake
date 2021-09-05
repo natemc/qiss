@@ -3,7 +3,7 @@
 # https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
 
 function(set_project_warnings project_name)
-  option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" FALSE)
+  option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" TRUE)
 
   set(MSVC_WARNINGS
       /W4 # Baseline reasonable warnings
@@ -34,7 +34,6 @@ function(set_project_warnings project_name)
   set(CLANG_WARNINGS
       -Wall
       -Wextra # reasonable and standard
-      -Wshadow # warn the user if a variable declaration shadows one from a parent context
       -Wnon-virtual-dtor # warn the user if a class with virtual functions has a non-virtual destructor. This helps
                          # catch hard to track down memory errors
       -Wold-style-cast # warn for c-style casts
@@ -47,10 +46,6 @@ function(set_project_warnings project_name)
       -Wnull-dereference # warn if a null dereference is detected
       -Wdouble-promotion # warn if float is implicit promoted to double
       -Wformat=2 # warn on security issues around functions that format output (ie printf)
-      -Wno-c99-extensions
-      -Wno-nested-anon-types
-      -Wno-gnu-anonymous-struct
-      -Wno-logical-op-parentheses
       -Wno-missing-braces
       -Wno-missing-field-initializers
       -Wno-unused-function
@@ -67,10 +62,16 @@ function(set_project_warnings project_name)
       -Wduplicated-branches # warn if if / else branches have duplicated code
       -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
       -Wuseless-cast # warn if you perform a cast to the same type
+      -Wno-parentheses
+      -fmax-errors=1
   )
 
   set(CLANG_WARNINGS
       ${CLANG_WARNINGS}
+      -Wno-c99-extensions
+      -Wno-gnu-anonymous-struct
+      -Wno-logical-op-parentheses
+      -Wno-nested-anon-types
       -ferror-limit=1
   )
 

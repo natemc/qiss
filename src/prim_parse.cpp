@@ -52,7 +52,7 @@ std::pair<bool, X> parse_byte::operator()(const C* first, const C* last) const {
     const X::rep msd(parse_digit(*first));
     const X::rep lsd(parse_digit(*(first + 1)));
     return msd < sizeof digits && lsd < sizeof digits?
-        std::pair(true, X(msd*16 + lsd)) : std::pair(false, X(0));
+        std::pair(true, X(X::rep(msd*16 + lsd))) : std::pair(false, X(0));
 }
 
 std::pair<bool, C> parse_char::operator()(const C* first, const C* last) const {
@@ -106,7 +106,7 @@ std::pair<bool, F> parse_float::operator()(const C* first, const C* last) const 
     if (*p == C('0') && p + 2 == q && !isdigit(C::rep(p[1]))) {
         const char c = char(tolower(C::rep(p[1])));
         return c == 'n'? std::pair(first == p, F(NF))
-            :  c == 'w'? std::pair(true, F(first == p? WF : -WF))
+            :  c == 'w'? std::pair(true, first == p? WF : -WF)
             :  /*else*/  std::pair(false, NF);
     }
 

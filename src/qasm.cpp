@@ -65,16 +65,17 @@ namespace {
 
     template <class T>
     void write_bytes(L<X>& code, T x) {
-        X buf[sizeof x];
+        X::rep buf[sizeof x];
         memcpy(buf, &x, sizeof buf);
         code.append(buf, buf + sizeof buf);
     }
 
     template <class T>
     void write_bytes(L<X>& code, T x, size_t pos) {
-        X buf[sizeof x];
+        X::rep buf[sizeof x];
         memcpy(buf, &x, sizeof buf);
-        std::copy(buf, buf + sizeof buf, code.begin() + pos);
+        std::transform(buf, buf + sizeof buf, code.begin() + pos,
+                       [](X::rep e){ return X(e); });
     }
 
     template <class X>

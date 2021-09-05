@@ -38,6 +38,7 @@ namespace {
         index_t                    local (index_t i);
         index_t                    decarg(const char* inst, index_t i);
         index_t                    noarg (const char* inst, index_t i);
+        index_t                    siarg (const char* inst, index_t i); // static index
         template <class Z> index_t arg   (index_t i);
         template <class Z> index_t onearg(const char* inst, index_t i);
         template <class Z> index_t vecarg(const char* inst, index_t i);
@@ -80,9 +81,9 @@ namespace {
     }
 
     void Disassembler::dec(uint8_t x) {
-        if (100 <= x) ch('0' + x / 100);
-        if ( 10 <= x) ch('0' + x / 10 % 10);
-        ch('0' + x % 10);
+        if (100 <= x) ch(char('0' + x / 100));
+        if ( 10 <= x) ch(char('0' + x / 10 % 10));
+        ch(char('0' + x % 10));
     }
 
     void Disassembler::dec(X x) {
@@ -127,9 +128,9 @@ namespace {
 
     template <class Z>
     index_t Disassembler::arg(index_t i) {
-        Z z;
+        typename Z::rep z;
         memcpy(&z, code + i, sizeof z);
-        os << z;
+        os << Z(z);
         return i + index_t(sizeof z);
     }
 
@@ -153,12 +154,22 @@ namespace {
         return arg<Z>(i + 1);
     }
 
+    index_t Disassembler::siarg(const char* inst, index_t i) {
+        bytes(i+1, sizeof(sindex_t));
+        instr(inst);
+        sindex_t z;
+        memcpy(&z, code + i, sizeof z);
+        os << z;
+        return i + index_t(sizeof z);
+    }
+
+
     template <class Z>
     index_t Disassembler::vecarg(const char* inst, index_t i) {
         immlen_t n;
         memcpy(&n, code + i + 1, sizeof n);
-        bytes(i+1, sizeof n+n*sizeof(Z));
-        i += 1 + sizeof n;
+        bytes(i+1, index_t(sizeof n+n*sizeof(Z)));
+        i += 1 + index_t(sizeof n);
         instr(inst);
         if (0 < n) {
             i = arg<Z>(i);
@@ -171,6 +182,7 @@ namespace {
     }
 
     index_t Disassembler::operator()(index_t i) {
+        constexpr index_t immlen_t_size = index_t(sizeof(immlen_t));
         uint8_t addr[sizeof code];
         memcpy(addr, &code, sizeof addr);
         if constexpr(std::endian::native == std::endian::big) {
@@ -185,7 +197,7 @@ namespace {
         case Opcode::assign  : return noarg(":", i);
         case Opcode::at      : return noarg("@", i);
         case Opcode::bang    : return noarg("!", i);
-        case Opcode::bindm   : return onearg<sindex_t>("bindm", i);
+        case Opcode::bindm   : return siarg("bindm", i);
         case Opcode::bindl   : return decarg("bindl", i);
         case Opcode::bump    : return decarg("bump", i);
         case Opcode::bzero   : return jump("bzero", i);
@@ -218,8 +230,8 @@ namespace {
             index_t k = i + 1;
             immlen_t n;
             memcpy(&n, code + k, sizeof n);
-            k += sizeof n;
-            bytes(i+1, n+sizeof n);
+            k += immlen_t_size;
+            bytes(i+1, n+immlen_t_size);
             instr("B");
             for (index_t j = 0; j < n; ++j, ++k) dec(code[k]);
             ch('b');
@@ -244,8 +256,8 @@ namespace {
             index_t k = i + 1;
             immlen_t n;
             memcpy(&n, code + k, sizeof n);
-            k += sizeof n;
-            bytes(i+1, n+sizeof n);
+            k += immlen_t_size;
+            bytes(i+1, n+immlen_t_size);
             instr("\"");
             for (index_t j = 0; j < n; ++j, ++k) os.emplace_back(C::rep(X::rep(code[k])));
             return k;
@@ -254,8 +266,8 @@ namespace {
             index_t k = i + 1;
             immlen_t n;
             memcpy(&n, code + k, sizeof n);
-            k += sizeof n;
-            bytes(i+1, n+sizeof n);
+            k += immlen_t_size;
+            bytes(i+1, n+immlen_t_size);
             instr("`");
             for (index_t j = 0; j < n; ++j, ++k) os.emplace_back(C::rep(X::rep(code[k])));
             return k;
@@ -267,8 +279,8 @@ namespace {
             index_t k = i + 1;
             immlen_t n;
             memcpy(&n, code + k, sizeof n);
-            k += sizeof n;
-            bytes(i+1, n+sizeof n);
+            k += immlen_t_size;
+            bytes(i+1, n+immlen_t_size);
             instr("X");
             ch({'0', 'x'});
             for (index_t j = 0; j < n; ++j, ++k) byte(k);
@@ -292,8 +304,8 @@ namespace {
         case Opcode::over    : return noarg("/", i);
         case Opcode::pop     : return noarg("pop", i);
         case Opcode::prior   : return noarg("':", i);
-        case Opcode::pushc   : return onearg<sindex_t>("pushc", i);
-        case Opcode::pushm   : return onearg<sindex_t>("pushm", i);
+        case Opcode::pushc   : return siarg("pushc", i);
+        case Opcode::pushm   : return siarg("pushm", i);
         case Opcode::recip   : return noarg("%:", i);
         case Opcode::ret     : return noarg("return", i);
         case Opcode::rev     : return noarg("rev", i);

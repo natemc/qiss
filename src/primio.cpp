@@ -67,19 +67,19 @@ namespace {
         static L<X> new_buffer() { return L<X>(make_empty_list<X>(BUFFER_SIZE)); }
     } write_buffers;
 
-    ssize_t writeall(int fd, const void* buf, std::size_t n) {
+    ssize_t writeall(int fd, const void* buf, index_t n) {
         const char* const p = static_cast<const char*>(buf);
-        std::size_t total = 0;
+        index_t total = 0;
         while (total < n) {
-            const ssize_t written = write(fd, p + total, n - total);
-            if      (0 <= written)   total += std::size_t(written);
+            const ssize_t written = write(fd, p + total, std::size_t(n - total));
+            if      (0 <= written)   total += written;
             else if (errno != EINTR) return written;
         }
-        return ssize_t(total);
+        return total;
     }
 
     H bblush(H h, char* buf, index_t* tail) {
-        if (writeall(H::rep(h), buf, std::size_t(*tail)) < 0)
+        if (writeall(H::rep(h), buf, *tail) < 0)
             throw Exception("'os");
         *tail = 0;
         return h;
@@ -91,17 +91,17 @@ namespace {
         return bblush(h, reinterpret_cast<char*>(buf->begin()), &buf->n);
     }
 
-    H bbrite(H h, const void* p, std::size_t n, char* buf, index_t* tail) {
-        const std::size_t avail = BUFFER_SIZE - std::size_t(*tail);
+    H bbrite(H h, const void* p, index_t n, char* buf, index_t* tail) {
+        const index_t avail = BUFFER_SIZE - *tail;
         if (n <= avail) {
-            memcpy(buf + *tail, p, n);
+            memcpy(buf + *tail, p, std::size_t(n));
             *tail += n;
         } else if (n <= BUFFER_SIZE + avail) {
-            memcpy(buf + *tail, p, avail);
+            memcpy(buf + *tail, p, std::size_t(avail));
             *tail += avail;
             bblush(h, buf, tail);
-            memcpy(buf, static_cast<const char*>(p) + avail, n - avail);
-            *tail = index_t(n - avail);
+            memcpy(buf, static_cast<const char*>(p) + avail, std::size_t(n - avail));
+            *tail = n - avail;
         } else {
             bblush(h, buf, tail);
             if (writeall(H::rep(h), p, n) < 0)
@@ -110,7 +110,7 @@ namespace {
         return h;
     }
 
-    H brite(H h, const void* p, std::size_t n) {
+    H brite(H h, const void* p, index_t n) {
         List<X>* const buf = write_buffers[h];
         if (buf)
             bbrite(h, p, n, reinterpret_cast<char*>(buf->begin()), &buf->n);
@@ -146,19 +146,25 @@ H flush(H h) { return blush(h); }
 
 H operator<<(H h, H(*f)(H)) { return f(h); }
 
-H operator<<(H h, const char* s) { return brite(h, s , strlen(s)); }
-H operator<<(H h, char        c) { return brite(h, &c, 1        ); }
-H operator<<(H h, uint8_t     x) { return brite(h, &x, 1        ); }
+H operator<<(H h, const char* s) { return brite(h, s , index_t(strlen(s))); }
+H operator<<(H h, char        c) { return brite(h, &c, 1); }
+H operator<<(H h, uint8_t     x) { return brite(h, &x, 1); }
 H operator<<(H h, double      x) { return write_double(h, x); }
 
 H operator<<(H h, int32_t     x) { return write_int64(h, x); }
 H operator<<(H h, int64_t     x) { return write_int64(h, x); }
 H operator<<(H h, uint32_t    x) { return write_uint64(h, x); }
 H operator<<(H h, uint64_t    x) { return write_uint64(h, x); }
+
+#ifndef __GNUG__
+// TODO need to test if std::is_same_v<uin64_t, std::size_t>
+// or just make one of them unnecessary
 H operator<<(H h, std::size_t x) { return write_uint64(h, x); }
+#endif
+
 H operator<<(H h, const void* x) { return write_pointer(h, x); }
 H operator<<(H h, std::pair<const char*, const char*> x) {
-    return brite(h, x.first, std::size_t(x.second - x.first));
+    return brite(h, x.first, x.second - x.first);
 }
 
 H operator<<(H h, B x) { return h << "01"[B::rep(x)] << 'b'; }
@@ -187,5 +193,5 @@ H operator<<(H h, X x) { return write_byte(h, x); }
 
 H operator<<(H h, std::pair<const C*, const C*> x) {
     assert(x.first <= x.second);
-    return brite(h, x.first, std::size_t(x.second - x.first));
+    return brite(h, x.first, x.second - x.first);
 }

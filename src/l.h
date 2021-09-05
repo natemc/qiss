@@ -48,8 +48,17 @@ template <class Z> struct [[nodiscard]] L {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wimplicit-int-conversion"
+#endif
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
         std::transform(first, last, std::back_inserter(*this),
                        [](const auto& e){ return value_type(e); });
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
     }

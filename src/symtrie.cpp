@@ -54,7 +54,7 @@ std::pair<bool, S> SymTrie::insert(const char* s) {
 
 std::pair<bool, S> SymTrie::insert(const char* first, const char* last) {
     if (symbols.size() + (last-first) >= std::numeric_limits<I::rep>::max()) {
-        write(2, "'wsfull", 7);
+        [[maybe_unused]] const ssize_t written = write(2, "'wsfull", 7);
         exit(1);
     }
     return first == last? std::pair(false, S(0))
@@ -65,7 +65,7 @@ std::pair<bool, S>
 SymTrie::insert(Node* n, const char* first, const char* last, const char* i, hilo hl) {
     if (i == last) {
         if (n->symbol != EMPTY) return std::pair(false, S(n->symbol));
-        n->symbol = S::rep(I::rep(positions.size()));
+        n->symbol = S::rep(positions.size());
         positions.emplace_back(I::rep(symbols.size()));
         symbols.append(first, last);
         symbols.push_back(C('\0'));

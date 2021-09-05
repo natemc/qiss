@@ -17,7 +17,7 @@ namespace {
             for (index_t i = 0; i < x.size() - 1; ++i)
                 r.emplace_back(y.begin() + R(x[i]), y.begin() + R(x[i + 1]));
             r.emplace_back(y.begin() + R(x.back()), y.end());
-            return std::move(r);
+            return r;
         }
 
         template <class Z> O operator()(L<Z> x, O y) const {

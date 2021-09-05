@@ -58,10 +58,17 @@ private:
         //union alignas(std::max_align_t) {
         union {
             char x[sizeof(Block*) * 2];
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
             struct {
                 Block* next;
                 Block* prev;
             };
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
         };
 
         bool        in_use       () const;

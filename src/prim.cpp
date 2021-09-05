@@ -19,9 +19,9 @@ namespace {
 // https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition
 bool fuzzy_match(double x, double y) {
     constexpr int64_t ULPs = 4;
-    return isnan(x) && isnan(y)
+    return std::isnan(x) && std::isnan(y)
         || fabs(x - y) <= std::numeric_limits<double>::epsilon()
-        || (0 < x) == (0 < y) && abs(bitcast<int64_t>(x) - bitcast<int64_t>(y)) <= ULPs;
+        || (0 < x) == (0 < y) && std::abs(bitcast<int64_t>(x) - bitcast<int64_t>(y)) <= ULPs;
 }
 TEST_CASE("fuzzy match should be much better tested") {
     CHECK(fuzzy_match(0, 0));

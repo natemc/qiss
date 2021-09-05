@@ -138,9 +138,12 @@ template <class X> struct List: Object {
     const X& operator[](J       i) const { return (*this)[J::rep(i)]; }
 
     X*       begin     ()                {
-        return reinterpret_cast<X*>(first);
+#ifdef __GNUG__
+        return static_cast<X*>(__builtin_assume_aligned(first, 32));
+#else
         // clang crashes :-(
-//        return static_cast<X*>(__builtin_assume_aligned(first, 32));
+        return reinterpret_cast<X*>(first);
+#endif
     }
     const X* begin     ()          const { return const_cast<List*>(this)->begin(); }
     X*       end       ()                { return begin() + n; }
@@ -148,7 +151,14 @@ template <class X> struct List: Object {
 
 private:
     uint64_t hash_cache; // just an idea (we do need the bytes to align first)
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
     char     first[];
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
 };
 
 struct Dict: Object {
