@@ -15,7 +15,7 @@ set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_20)
 target_compile_options(project_options INTERFACE
-    $<$<CONFIG:RELEASE>:-ffast-math>
+    -fno-rtti
 # TODO fix for non-x86 targets
     $<$<CONFIG:RELEASE>:-mavx2>
 )
