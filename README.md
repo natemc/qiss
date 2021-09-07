@@ -1,4 +1,7 @@
 # qiss
+
+![build](https://github.com/natemc/qiss/actions/workflows/onpush.yml/badge.svg)
+
 qiss is short and sweet
 
 ## What
