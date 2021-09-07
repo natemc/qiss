@@ -1,4 +1,4 @@
-name: on-push
+name: Build and unit test
 on: [push]
 jobs:
   linux-debug-build:
