@@ -7,6 +7,10 @@ find_package(FLEX REQUIRED)
 flex_target(lexer src/qiss.l "${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c"
     COMPILE_FLAGS -s
     DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/lex.yy.h")
+add_library(lex ${FLEX_lexer_OUTPUTS})
+target_include_directories(lex PUBLIC src)
+set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
+    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
 
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_20)
@@ -126,13 +130,10 @@ add_executable(qc
     src/parse.cpp
     src/qc-main.cpp
     src/read_file.cpp
-    src/token.cpp
-    ${FLEX_lexer_OUTPUTS})
+    src/token.cpp)
 target_compile_definitions(qc PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qc PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
-    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
-target_link_libraries(qc PRIVATE project_options project_warnings qisscore)
+target_link_libraries(qc PRIVATE project_options project_warnings lex qisscore)
 target_include_directories(qc PUBLIC src)
 
 add_executable(qd
@@ -159,13 +160,10 @@ add_executable(qiss
     src/read_file.cpp
     src/token.cpp
     src/uniform.cpp
-    src/vm.cpp
-    ${FLEX_lexer_OUTPUTS})
+    src/vm.cpp)
 target_compile_definitions(qiss PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qiss PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
-    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
-target_link_libraries(qiss PRIVATE project_options project_warnings qisscore)
+target_link_libraries(qiss PRIVATE project_options project_warnings lex qisscore)
 target_include_directories(qiss PUBLIC src)
 
 add_executable(ql
@@ -173,13 +171,10 @@ add_executable(ql
     src/qisslex.cpp
     src/ql-main.cpp
     src/read_file.cpp
-    src/token.cpp
-    ${FLEX_lexer_OUTPUTS})
+    src/token.cpp)
 target_compile_definitions(ql PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(ql PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
-    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
-target_link_libraries(ql PRIVATE project_options project_warnings qisscore)
+target_link_libraries(ql PRIVATE project_options project_warnings lex qisscore)
 target_include_directories(ql PUBLIC src)
 
 add_executable(qp
@@ -187,13 +182,10 @@ add_executable(qp
     src/parse.cpp
     src/qp-main.cpp
     src/read_file.cpp
-    src/token.cpp
-    ${FLEX_lexer_OUTPUTS})
+    src/token.cpp)
 target_compile_definitions(qp PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qp PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
-    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
-target_link_libraries(qp PRIVATE project_options project_warnings qisscore)
+target_link_libraries(qp PRIVATE project_options project_warnings lex qisscore)
 target_include_directories(qp PUBLIC src)
 
 add_executable(vm
@@ -211,13 +203,10 @@ add_executable(vm
     src/token.cpp
     src/uniform.cpp
     src/vm.cpp
-    src/vm-main.cpp
-    ${FLEX_lexer_OUTPUTS})
+    src/vm-main.cpp)
 target_compile_definitions(vm PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(vm PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
-    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
-target_link_libraries(vm PRIVATE project_options project_warnings qisscore)
+target_link_libraries(vm PRIVATE project_options project_warnings lex qisscore)
 target_include_directories(vm PUBLIC src)
 
 add_executable(utest
@@ -230,10 +219,7 @@ add_executable(utest
     src/test-main.cpp
     src/token.cpp
     src/vm.cpp
-    ${CORE}
-    ${FLEX_lexer_OUTPUTS})
+    ${CORE})
 target_include_directories(utest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c" PROPERTIES
-    COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-parameter")
 target_include_directories(utest PUBLIC src)
-target_link_libraries(utest PRIVATE project_options project_warnings)
+target_link_libraries(utest PRIVATE project_options project_warnings lex)

@@ -73,7 +73,7 @@ namespace {
             r.reserve(y.size() + 1);
             r.emplace_back(x);
             r.append(y.begin(), y.end());
-            return r;
+            return O(std::move(r));
         }
     
         template <class X, class Y> O operator()(L<X> x, Y y) const {
@@ -82,7 +82,7 @@ namespace {
             r.reserve(x.size() + 1);
             r.append(x.begin(), x.end());
             r.emplace_back(y);
-            return r;
+            return O(std::move(r));
         }
     
         template <class X, class Y> auto operator()(L<X> x, L<Y> y) const {

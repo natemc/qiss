@@ -28,12 +28,12 @@ const struct Each {
         if constexpr(std::is_same_v<R,X>) {
             if (x.mine()) {
                 std::transform(x.begin(), x.end(), x.begin(), std::forward<F>(f));
-                return x;
+                return O(std::move(x));
             }
         }
         L<R> r(x.size());
         std::transform(x.begin(), x.end(), r.begin(), std::forward<F>(f));
-        return r;
+        return O(std::move(r));
     }
 
     template <class F>
@@ -43,7 +43,7 @@ const struct Each {
             return object_ret(std::forward<F>(f), std::move(x));
         L<R> r(x.size());
         std::transform(x.begin(), x.end(), r.begin(), std::forward<F>(f));
-        return r;
+        return O(std::move(r));
     }
 
     template <class FUN>
@@ -78,20 +78,20 @@ const struct Each {
             if (x.mine()) {
                 std::transform(x.begin(), x.end(), y.begin(), x.begin(),
                                std::forward<F>(f));
-                return x;
+                return O(std::move(x));
             }
         }
         if constexpr(std::is_same_v<R,Y>) {
             if (y.mine()) {
                 std::transform(x.begin(), x.end(), y.begin(), y.begin(),
                                std::forward<F>(f));
-                return y;
+                return O(std::move(y));
             }
         }
         L<R> r(x.size());
         std::transform(x.begin(), x.end(), y.begin(), r.begin(),
                        std::forward<F>(f));
-        return r;
+        return O(std::move(r));
     }
 
     auto operator()(ufun_t f, O x)      const { return each1(f, std::move(x)); }
@@ -114,10 +114,10 @@ private:
                 for (index_t j = 0; j < i; ++j) p.emplace_back(r[j]);
                 p.emplace_back(std::move(rx));
                 for (; i < x.size(); ++i) p.emplace_back(f(x[i]));
-                return p;
+                return O(std::move(p));
             }
         }
-        return r;
+        return O(std::move(r));
     }
 
     template <class F, class R, class X, class Y>
@@ -137,10 +137,10 @@ private:
                 for (index_t j = 0; j < i; ++j) p.emplace_back(r[j]);
                 p.emplace_back(std::move(rx));
                 for (; i < x.size(); ++i) p.emplace_back(f(x[i], y[i]));
-                return p;
+                return O(std::move(p));
             }
         }
-        return r;
+        return O(std::move(r));
     }
 
     template <class FUN, class Z>
@@ -155,7 +155,7 @@ private:
             r.emplace_back(std::move(r0));
             r.emplace_back(std::move(r1));
             std::transform(x.begin() + 2, x.end(), std::back_inserter(r), f);
-            return r;
+            return O(std::move(r));
         }
 #define CS(X) case -OT<X>::typei(): \
     return O(list_a(f, r0.atom<X>(), r1.atom<X>(), std::move(x)))
@@ -184,7 +184,7 @@ private:
             r.emplace_back(std::move(r1));
             std::transform(x.begin() + 2, x.end(), y.begin() + 2,
                            std::back_inserter(r), f);
-            return r;
+            return O(std::move(r));
         }
 #define CS(X) case -OT<X>::typei(): \
     return list_a(f, r0.atom<X>(), r1.atom<X>(), std::move(x), std::move(y))

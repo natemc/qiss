@@ -29,13 +29,6 @@ namespace {
         });
         return r;
     }
-
-    KV<S, KV<S,O>> env;
-    const struct InitEnv {
-        InitEnv() { env.add(S(0), init_module(S(0))); }
-    } init_env;
-
-    L<S> no_infix_words;
 }
 
 bool operator==(O x, O y) { return match_(x, y); }
@@ -43,6 +36,9 @@ bool operator==(O x, O y) { return match_(x, y); }
 #define INTERP(x, y) MATCH((x), interp(y))
 
 O interp(const char* src) {
+    KV<S, KV<S,O>> env;
+    env.add(S(0), init_module(S(0)));
+    L<S> no_infix_words;
     return interp(env, L<C>(src, src + strlen(src)), no_infix_words);
 }
 

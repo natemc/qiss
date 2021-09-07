@@ -486,8 +486,10 @@ namespace {
         for (index_t i = types.size() - 1; i >= start; --i) {
             if (types[i] == Ast::id) {
                 const auto it = std::find(xyz.begin(), xyz.end(), nodes[i]->s);
-                if (it != xyz.end())
-                    mif = std::max(mif, it - xyz.begin());
+                if (it != xyz.end()) {
+                    const index_t implicit_formal_index(it - xyz.begin());
+                    mif = std::max(mif, implicit_formal_index);
+                }
             } else if (types[i] == Ast::lambda) {
                 // TODO allow a local function with explicit formals to capture
                 // - and thus create - my implicit formals?  It's clearly not

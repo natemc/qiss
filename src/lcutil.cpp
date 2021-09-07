@@ -72,10 +72,6 @@ L<C>& operator<<(L<C>& buf, const L<C>& x) {
     return buf;
 }
 
-L<C>& operator<<(L<C>& buf, std::size_t x) {
-    return write_uint64(buf, x);
-}
-
 L<C>& operator<<(L<C>& buf, int32_t x) {
     return write_int64(buf, x);
 }
@@ -88,13 +84,9 @@ L<C>& operator<<(L<C>& buf, uint32_t x) {
     return write_uint64(buf, x);
 }
 
-#ifndef __GNUG__
-// TODO need to test if std::is_same_v<uin64_t, std::size_t>
-// or just make one of them unnecessary
 L<C>& operator<<(L<C>& buf, uint64_t x) {
     return write_uint64(buf, x);
 }
-#endif
 
 L<C>& operator<<(L<C>& buf, B x) {
     return buf << "01"[B::rep(x)] << 'b';
@@ -141,7 +133,7 @@ L<C>& operator<<(L<C>& buf, J x) {
     if (x.is_null()) return buf << "0N";
     if (x < J(0)) { buf << '-'; x = -x; }
     if (x == WJ) return buf << "0W";
-    return buf << std::size_t(J::rep(x));
+    return buf << uint64_t(J::rep(x));
 }
 
 L<C>& operator<<(L<C>& buf, S x) {

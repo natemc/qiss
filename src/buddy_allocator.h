@@ -58,7 +58,7 @@ private:
         //union alignas(std::max_align_t) {
         union {
             char x[sizeof(Block*) * 2];
-#ifdef __GNUG__
+#if defined(__GNUG__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
@@ -66,7 +66,7 @@ private:
                 Block* next;
                 Block* prev;
             };
-#ifdef __GNUG__
+#if defined(__GNUG__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
         };

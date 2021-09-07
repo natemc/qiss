@@ -65,7 +65,7 @@ namespace {
         std::generate_n(std::back_inserter(r), rows - 1,
                         [&,cols=cols](){ return make_row(cols); });
         r.emplace_back(make_row(last_row_cols));
-        return r;
+        return O(std::move(r));
     }
 
     template <class X, class Y>
@@ -76,7 +76,7 @@ namespace {
         L<O> r;
         r.reserve(rows);
         std::generate_n(std::back_inserter(r), rows, [&](){ return replicate(cols, y); });
-        return r;
+        return O(std::move(r));
     }
   
     template <class Y> L<Y> take_from_back(index_t n, L<Y> y) {

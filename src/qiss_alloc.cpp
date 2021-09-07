@@ -66,9 +66,14 @@ namespace qiss_alloc_detail {
     QissAllocInit::~QissAllocInit() { if (!--init_counter) lalloc.~Alloc(); }
 }
 
-void* operator new(std::size_t sz) { return qiss_alloc(sz).first; }
-void  operator delete(void* p) noexcept { qiss_free(p); }
+#ifdef DOCTEST_CONFIG_DISABLE
+// For reasons that are not obvious from reading doctest.h, doctest requires
+// new to return a 16-byte aligned pointer. Currently, qiss_alloc returns
+// 8-byte aligned pointers. That could be changed, but it would be significant.
+void* operator new   (std::size_t sz) { return qiss_alloc(sz).first; }
+void  operator delete(void* p)              noexcept { qiss_free(p); }
 void  operator delete(void* p, std::size_t) noexcept { qiss_free(p); }
+#endif
 
 uint64_t qiss_allocated() {
     return lalloc.used();

@@ -16,7 +16,6 @@ L<C>& operator<<(L<C>& buf, int32_t        x);
 L<C>& operator<<(L<C>& buf, int64_t        x);
 L<C>& operator<<(L<C>& buf, uint32_t       x);
 L<C>& operator<<(L<C>& buf, uint64_t       x);
-L<C>& operator<<(L<C>& buf, std::size_t    x);
 L<C>& operator<<(L<C>& buf, const L<C>&    x);
 L<C>& operator<<(L<C>& buf, B              x);
 L<C>& operator<<(L<C>& buf, C              x);
