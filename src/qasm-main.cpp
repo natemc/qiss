@@ -1,11 +1,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception.h>
-#include <o.h>
+#include <l.h>
 #include <objectio.h>
 #include <primio.h>
 #include <qasm.h>
-#include <qiss_alloc.h>
 #include <read_file.h>
 #include <sym.h>
 
