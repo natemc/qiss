@@ -138,9 +138,12 @@ template <class X> struct List: Object {
     const X& operator[](J       i) const { return (*this)[J::rep(i)]; }
 
     X*       begin     ()                {
-        return reinterpret_cast<X*>(first);
+#if defined(__GNUG__) && !defined(__clang__)
         // clang crashes :-(
-//        return static_cast<X*>(__builtin_assume_aligned(first, 32));
+        return static_cast<X*>(__builtin_assume_aligned(first, 32));
+#else
+        return reinterpret_cast<X*>(first);
+#endif
     }
     const X* begin     ()          const { return const_cast<List*>(this)->begin(); }
     X*       end       ()                { return begin() + n; }
