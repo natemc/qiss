@@ -108,6 +108,24 @@ set(CORE
     src/vcond.cpp
     src/where.cpp)
 
+set(COMPILE
+    src/compile.cpp
+    src/disassemble.cpp
+    src/gen.cpp
+    src/module.cpp
+    src/parse.cpp
+    src/read_file.cpp
+    src/token.cpp)
+
+# I must be doing something wrong. This doesn't work on ubuntu w/g++.
+# Just using the COMPILE variable where needed works though it means
+# compiling those files a few extra times.
+#add_library(qisscomp ${COMPILE})
+#target_compile_definitions(qisscomp PUBLIC DOCTEST_CONFIG_DISABLE)
+#target_include_directories(qisscomp PUBLIC src)
+#target_include_directories(qisscomp PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+#target_link_libraries(qisscomp PRIVATE project_options project_warnings)
+
 add_library(qisscore ${CORE})
 target_compile_definitions(qisscore PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qisscore PUBLIC src)
@@ -122,15 +140,11 @@ target_link_libraries(qasm PRIVATE project_options project_warnings qisscore)
 target_include_directories(qasm PUBLIC src)
 
 add_executable(qc
-    src/compile.cpp
-    src/disassemble.cpp
-    src/gen.cpp
+    ${COMPILE}
     src/getline.cpp
-    src/module.cpp
-    src/parse.cpp
     src/qc-main.cpp
-    src/read_file.cpp
-    src/token.cpp)
+    src/qisslex.cpp
+    src/read_file.cpp)
 target_compile_definitions(qc PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qc PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(qc PRIVATE project_options project_warnings lex qisscore)
@@ -146,21 +160,17 @@ target_link_libraries(qd PRIVATE project_options project_warnings qisscore)
 target_include_directories(qd PUBLIC src)
 
 add_executable(qiss
-    src/disassemble.cpp
-    src/gen.cpp
     src/getline.cpp
     src/infix.cpp
     src/inspect.cpp
     src/interp.cpp
-    src/module.cpp
-    src/parse.cpp
     src/qasm.cpp
     src/qisslex.cpp
     src/qiss-main.cpp
     src/read_file.cpp
-    src/token.cpp
     src/uniform.cpp
-    src/vm.cpp)
+    src/vm.cpp
+    ${COMPILE})
 target_compile_definitions(qiss PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qiss PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(qiss PRIVATE project_options project_warnings lex qisscore)
@@ -210,15 +220,11 @@ target_link_libraries(vm PRIVATE project_options project_warnings lex qisscore)
 target_include_directories(vm PUBLIC src)
 
 add_executable(utest
-    src/disassemble.cpp
-    src/gen.cpp
     src/interp.cpp
-    src/module.cpp
-    src/parse.cpp
     src/qiss-test.cpp
     src/test-main.cpp
-    src/token.cpp
     src/vm.cpp
+    ${COMPILE}
     ${CORE})
 target_include_directories(utest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(utest PUBLIC src)
