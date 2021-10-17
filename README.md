@@ -6,7 +6,7 @@ qiss is short and sweet.
 
 ## What
 
-qiss is a byte-code interpreter. It has the same high-level parts that most byte-code interpreters (e.g., Python, Ruby, Lua) do:
+qiss is a byte-code interpreter for a variant of the k language, an APL descendant used in some high performance time-series database systems. It has the same high-level parts that most byte-code interpreters (e.g., Python, Ruby, Lua) do:
 
 ```
 Lexer -> Parser -> Compiler -> Code Generator -> Virtual Machine
@@ -14,7 +14,7 @@ Lexer -> Parser -> Compiler -> Code Generator -> Virtual Machine
 
 These high-level parts all share a runtime that implements features like memory management, I/O, and built-in functions & data structures.
 
-The qiss language is a variant of k, an APL descendant used in some high performance time-series database systems.
+qiss is very much a work in progress, unsuitable for serious use.
 
 ## Why
 
@@ -33,6 +33,8 @@ nate@Nates-iMac qiss % cmake --build build
 ```
 
 ## Test
+
+There is a growing number of unit tests captured in the executable, `utest`:
 
 ```
 qiss % build/utest
@@ -253,3 +255,52 @@ a b
   \\
   
 ```
+
+## Visibility
+
+When you build qiss, it produces several executables that allow you to interact with a subset of the system. For example, `ql` exposes the lexer:
+
+```
+qiss % rlwrap build/ql
+  1+!10
+LONG      | 1
+OPERATOR  | +
+OPERATOR  | !
+LONG      | 10
+```
+
+Similarly, you can run just up to parsing using `qp`:
+
+```
+qiss % rlwrap build/qp
+  1+!10
+type node depth
+---------------
+4d   ::   00   
+4f   +    01   
+6e   1    02   
+4f   !:   02   
+6e   10   03   
+```
+
+Moreover, the more complex programs (`qp`, `qc`, `vm`, and `qiss` itself) support a trace feature that is enabled with the `-t` flag. For example, running `qiss -t` shows the virtual machine assembly and stack as each expression is executed:
+
+<pre>
+  {(*|x),+/x}5 8
+051f52ff  4b 13 00 00 00                   pushc   4939           []
+051f5304  63 ea 00 00 00                   call    0x000000ea     [5 8]                                
+051f530a  35 0b                            local   -1             [5 8]                                
+051f530c  6f 2b                            op      +              [5 8;5 8]                            
+051f530e  2f                               /                      [+;5 8;5 8]                          
+051f530f  31 01                            invoke  1              [+/;5 8;5 8]                         
+051f5311  35 0b                            local   -1             [13;5 8]                             
+051f5313  45                               rev                    [5 8;13;5 8]                         
+051f5314  30                               *:                     [8 5;13;5 8]                         
+051f5315  2c                               ,                      [8;13;5 8]                           
+051f5316  34 01                            clean   1              [8 13;5 8]                           
+051f5318  72                               return                 [8 13]                               
+051f5309  72                               return                 [8 13]                               
+8 13
+</pre>
+
+
