@@ -27,7 +27,7 @@ My goal for qiss is to have fun learning. Here are a few components I've found e
 ## Build
 
 ```
-nate@Nates-iMac qiss % cmake -S src -B build
+nate@Nates-iMac qiss % cmake -S . -B build
 ..
 nate@Nates-iMac qiss % cmake --build build
 ```
