@@ -193,3 +193,24 @@ inline X operator+(X x, int y) { return X(X::rep(X::rep(x) + y)); }
 inline X operator-(X x, int y) { return X(X::rep(X::rep(x) - y)); }
 inline X operator+(X x, X   y) { return X(X::rep(x) + X::rep(y)); }
 inline X operator-(X x, X   y) { return X(X::rep(x) - X::rep(y)); }
+
+inline B operator==(F x, I y) { return B(F::rep(x) == I::rep(y)); }
+inline B operator==(I x, F y) { return B(I::rep(x) == F::rep(y)); }
+inline B operator==(F x, J y) { return B(F::rep(x) == J::rep(y)); }
+inline B operator==(J x, F y) { return B(J::rep(x) == F::rep(y)); }
+inline B operator==(I x, J y) { return B(I::rep(x) == J::rep(y)); }
+inline B operator==(J x, I y) { return B(J::rep(x) == I::rep(y)); }
+
+inline B operator<(F x, I y) { return B(F::rep(x) < I::rep(y)); }
+inline B operator<(I x, F y) { return B(I::rep(x) < F::rep(y)); }
+inline B operator<(F x, J y) { return B(F::rep(x) < J::rep(y)); }
+inline B operator<(J x, F y) { return B(J::rep(x) < F::rep(y)); }
+inline B operator<(I x, J y) { return B(I::rep(x) < J::rep(y)); }
+inline B operator<(J x, I y) { return B(J::rep(x) < I::rep(y)); }
+
+inline B operator>(F x, I y) { return B(F::rep(x) > I::rep(y)); }
+inline B operator>(I x, F y) { return B(I::rep(x) > F::rep(y)); }
+inline B operator>(F x, J y) { return B(F::rep(x) > J::rep(y)); }
+inline B operator>(J x, F y) { return B(J::rep(x) > F::rep(y)); }
+inline B operator>(I x, J y) { return B(I::rep(x) > J::rep(y)); }
+inline B operator>(J x, I y) { return B(J::rep(x) > I::rep(y)); }
