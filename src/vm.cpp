@@ -433,11 +433,11 @@ O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
     L<O>     constants     (module["constants"_s]);
     L<O>     statics       (module["statics"_s]);
     L<X>     code          (module["code"_s]);
-    if (code.empty()) return O{};
-    assert(start < code.size());
-    const X* ip      = code.begin() + start;
-    int      stripe  = 0;
-    for (; Opcode(X::rep(*ip)) != Opcode::halt; ++ip) {
+    assert(start <= code.size());
+    if (code.size() == start) return O{};
+    
+    int stripe  = 0;
+    for (const X* ip = code.begin() + start; Opcode(X::rep(*ip)) != Opcode::halt; ++ip) {
         if (trace) do_trace(H(1), ip, vs, stripes[stripe]);
         switch (Opcode(X::rep(*ip))) {
         case Opcode::bzero   : {
