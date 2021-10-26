@@ -27,7 +27,7 @@ My goal for qiss is to have fun learning. Here are a few components I've found e
 ## Build
 
 ```
-nate@Nates-iMac qiss % cmake -S src -B build
+nate@Nates-iMac qiss % cmake -S . -B build
 ..
 nate@Nates-iMac qiss % cmake --build build
 ```
@@ -77,7 +77,8 @@ qiss % rlwrap build/qiss
 2f
   / all expressions are evaluated right-to-left; there is no precedence
 3*2+2
-  
+12
+
   / uniform list literals require minimal punctuation
   1 2 3 / integer (64-bit) list literal
 1 2 3
@@ -191,6 +192,13 @@ a| 11
 b| 12
 c| 13
   / similarly, a dict can be used as an index
+  n@=n / @ here forces unary interpretation of =
+c| ccccc
+a| aaaa
+d| dd
+b| bbbbb
+e| eeee
+  v:82 63 80 99 83 66 51 34 83 69 16 81 16 90 21 82 71 32 55 19
   v@=n
 c| 82 51 34 21 71
 a| 63 83 16 81
@@ -214,8 +222,6 @@ a b
   / tables can be indexed using column names
   t`a
 1 1 1 2 2 2 3 3 3
-  &25>t`b / unary & is where: it returns the true indexes
-0 1 3 4 6 7
   / tables can also be indexed using row numbers (starting from zero)
   t@!3
 a b 
@@ -226,6 +232,8 @@ a b
   t 0 / a single row is a dict
 a| 1
 b| 10
+  &25>t`b / unary & is where: it returns the true indexes
+0 1 3 4 6 7
   t@&25>t`b / applying a table to an integer list index yields a table
 a b 
 ----
