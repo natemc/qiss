@@ -11,7 +11,9 @@ int width(int64_t);
 int width(double);
 int width(uint32_t);
 int width(uint64_t);
+#ifdef __clang__
 int width(std::size_t);
+#endif
 int width(const void*);
 int width(const char*);
 

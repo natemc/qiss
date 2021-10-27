@@ -10,8 +10,10 @@ int width(int32_t     x) { return (x < 0) + width(uint32_t(std::abs(x))); }
 int width(int64_t     x) { return (x < 0) + width(uint64_t(std::abs(x))); }
 int width(double      x) { return snprintf(nullptr, 0, "%f", x); }
 int width(uint32_t    x) { return int(floor(log10(std::max(1u, x)))) + 1; }
-int width(uint64_t    x) { return int(floor(log10(std::max(1ull, x)))) + 1; }
+int width(uint64_t    x) { return int(floor(log10(double(std::max(uint64_t(1), x))))) + 1; }
+#ifdef __clang__
 int width(std::size_t x) { return int(floor(log10(std::max(std::size_t(1), x)))) + 1; }
+#endif
 int width(const void* x) { return snprintf(nullptr, 0, "%p", x); }
 int width(const char* x) { return static_cast<int>(strlen(x)); }
 int width(B  ) { return 1; }
