@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <ast.h>
 #include <at.h>
+#include <bit>
 #include <cat.h>
 #include <converge.h>
 #include <count.h>

@@ -128,23 +128,12 @@ const X* push_atom_literal(L<O>& stack, const X* ip) {
     return ip + sizeof x;
 }
 
-template <class Z>
-L<Z> list_from_bytecode(const X* ip) {
-    immlen_t n;
-    memcpy(&n, ip, sizeof n);
-    L<Z> lst(n);
-    const X* const first = ip + sizeof n;
-    const X* const last  = first + n * sizeof(Z);
-    std::transform(first, last, lst.begin(),
-                   [](X e){ return Z(typename Z::rep(X::rep(e))); });
-    return lst;
-}
-
 template <>
 const X* push_atom_literal<S>(L<O>& stack, const X* ip) {
     immlen_t n;
     memcpy(&n, ip + 1, sizeof n);
-    L<C> lst(list_from_bytecode<C>(ip + 1));
+    L<C> lst(n);
+    memcpy(static_cast<void*>(lst.begin()), ip + 1 + sizeof n, n * sizeof(C));
     stack.emplace_back(sym(lst.begin(), lst.end()));
     return ip + sizeof n + n * sizeof(C);
 }
@@ -161,7 +150,9 @@ template <class Z>
 const X* push_list_literal(L<O>& stack, const X* ip) {
     immlen_t n;
     memcpy(&n, ip + 1, sizeof n);
-    stack.emplace_back(list_from_bytecode<Z>(ip + 1));
+    L<Z> lst(n);
+    memcpy(static_cast<void*>(lst.begin()), ip + 1 + sizeof n, n * sizeof(Z));
+    stack.emplace_back(std::move(lst));
     return ip + sizeof n + n * sizeof(Z);
 }
 
