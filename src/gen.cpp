@@ -31,12 +31,15 @@ namespace {
     template <class X> using OT = ObjectTraits<X>;
 
     template <class X> struct Immediate {};
-#define CS(Z,O) \
-template <> struct Immediate<Z> { static constexpr Opcode value = Opcode::O; }
-    CS(B, immb); CS(D, immd); CS(F, immf); CS(I, immi);
-    CS(J, immj); CS(T, immt); CS(X, immx);
+#define CS(Z,O,L) template <> struct Immediate<Z> { \
+    static constexpr Opcode value = Opcode::O;      \
+    static constexpr Opcode list  = Opcode::L;      \
+}
+    CS(B, immb, immbv); CS(D, immd, immdv); CS(F, immf, immfv);
+    CS(I, immi, immiv); CS(J, immj, immjv); CS(T, immt, immtv); CS(X, immx, immxv);
 #undef CS
     template <class X> constexpr Opcode immediate_v = Immediate<X>::value;
+    template <class X> constexpr Opcode immediate_l = Immediate<X>::list;
 
     template <class Z> void write(L<X>& code, const Z& z) {
         uint8_t b[sizeof z];
@@ -46,11 +49,6 @@ template <> struct Immediate<Z> { static constexpr Opcode value = Opcode::O; }
 
     template <class Y, class Z> void write(L<X>& code, const Y& y, const Z& z) {
         write(code, y); write(code, z);
-    }
-
-    template <class Z> void write_imm(L<X>& code, Z x) {
-        write(code, immediate_v<Z>);
-        write(code, x);
     }
 
     template <class X> uint16_t two_bytes(X x) {
@@ -63,10 +61,33 @@ template <> struct Immediate<Z> { static constexpr Opcode value = Opcode::O; }
         return b;
     }
 
+    void write_constant(L<X>& code, L<O>& constants, O x) {
+        write(code, Opcode::pushc);
+        write(code, sindex_t(constants.size()));
+        constants.emplace_back(x);
+    }
+
+    template <class Z> void write_imm(L<X>& code, Z x) {
+        write(code, immediate_v<Z>);
+        write(code, x);
+    }
+
+    template <class Z> void write_imm(L<X>& code, L<Z> x) {
+        assert(size(x) <= 65535);
+        write(code, immediate_l<Z>, two_bytes(x.size()));
+        for (Z z: x) write(code, z);
+    }
+
     void write_imm(L<X>& code, C x) {
         write(code, Opcode::immstr, two_bytes(1));
         write(code, x);
         write(code, Opcode::first);
+    }
+
+    void write_imm(L<X>& code, L<C> x) {
+        assert(size(x) <= 65535);
+        write(code, Opcode::immstr, two_bytes(x.size()));
+        for (C c: x) write(code, c);
     }
 
     void write_imm(L<X>& code, S x) {
@@ -161,12 +182,6 @@ template <> struct Immediate<Z> { static constexpr Opcode value = Opcode::O; }
         }
     }
 
-    void write_constant(L<X>& code, L<O>& constants, O x) {
-        write(code, Opcode::pushc);
-        write(code, sindex_t(constants.size()));
-        constants.emplace_back(x);
-    }
-
     void write_enlist(L<X>& code, X arity) {
         if (arity == X(1))
             write(code, Opcode::enlist);
@@ -181,9 +196,14 @@ template <> struct Immediate<Z> { static constexpr Opcode value = Opcode::O; }
     }
 
     void write_imm(L<X>& code, L<O>& constants, O x) {
-#define CS(X) case -OT<X>::typei(): write_imm(code, x.atom<X>()); break
+#define CS(X) case -OT<X>::typei(): write_imm(code, x.atom<X>()); break;                \
+              case OT<X>::typei() : if (x->n <= 3) write_imm(code, L<X>(std::move(x))); \
+                                    else           write_constant(code, constants, x);  \
+                                    break
         switch (int(x.type())) {
-        CS(B); CS(C); CS(D); CS(F); CS(I); CS(J); CS(S); CS(T); CS(X);
+        case -OT<S>::typei(): write_imm(code, x.atom<S>()); break;
+        case OT<S>::typei() : write_constant(code, constants, x); break;
+        CS(B); CS(C); CS(D); CS(F); CS(I); CS(J); CS(T); CS(X);
         default: write_constant(code, constants, x);
 #undef CS
         }
