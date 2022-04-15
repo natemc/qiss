@@ -46,10 +46,10 @@ namespace {
         if (depth.empty()) return L<I>{};
         L<I> parent(depth.size());
         parent[0] = I(0);
-        L<L<J>> v(UKV(group(depth)).val());
-        for (index_t i = 1; i < v.size(); ++i) {
-            L<J> p(v[i - 1]); // parents
-            L<J> c(v[i]);     // children
+        L<L<J>> g(UKV(group(depth)).val());
+        for (index_t i = 1; i < g.size(); ++i) {
+            L<J> p(g[i - 1]); // parents
+            L<J> c(g[i]);     // children
             index_t pi = 1;
             for (J ch: c) {
                 while (pi < p.size() && p[pi] < ch) ++pi;
@@ -90,10 +90,10 @@ namespace {
 
     O lift_functions(O ast_) {
         KV<S,O> ast(+ast_);
-        // p<>!#p is overkill at this point, because until we lift local
+        // ~p=!#p is overkill at this point, because until we lift local
         // functions, there is only one root (zero), and it ain't a lambda!
         // See Hsu page 101
-        // i:&(Ast::lambda=ast`type)&p<>!#p:ast`parent
+        // i:&(Ast::lambda=ast`type)&~p=!#p:ast`parent
         L<X> type(ast["type"_s]);
         L<I> lams(&(type == X::rep(Ast::lambda)));
 
