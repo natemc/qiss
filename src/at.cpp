@@ -21,6 +21,8 @@ namespace {
         }
 
         template <class X>
+        X operator()(const L<X>& x, B y) const { return (*this)(x, B::rep(y)); }
+        template <class X>
         X operator()(const L<X>& x, I y) const { return (*this)(x, I::rep(y)); }
         template <class X>
         X operator()(const L<X>& x, J y) const { return (*this)(x, J::rep(y)); }
@@ -32,6 +34,8 @@ namespace {
 
         O operator()(O x, O y) const {
 #define CS(X)                                                               \
+case TP<X,B>::LA: return O((*this)(L<X>(std::move(x)), y.atom<B>()));       \
+case TP<X,B>::LL: return   (*this)(L<X>(std::move(x)), L<B>(std::move(y))); \
 case TP<X,I>::LA: return O((*this)(L<X>(std::move(x)), y.atom<I>()));       \
 case TP<X,I>::LL: return   (*this)(L<X>(std::move(x)), L<I>(std::move(y))); \
 case TP<X,J>::LA: return O((*this)(L<X>(std::move(x)), y.atom<J>()));       \
