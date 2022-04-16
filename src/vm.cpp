@@ -271,6 +271,7 @@ struct AmbivalentOp {
     Opcode op;
     ufun_t f1;
     bfun_t f2;
+    tfun_t f3;
 };
 
 const AmbivalentOp ops[] = {
@@ -284,7 +285,7 @@ const AmbivalentOp ops[] = {
     {Opcode::eq   , group   , eq     },
     {Opcode::fdiv , recip   , fdiv   },
     {Opcode::fill , null    , fill   },
-    {Opcode::find , distinct, find   },
+    {Opcode::find , distinct, find   , vcond},
     {Opcode::great, idesc   , greater},
     {Opcode::less , iasc    , less   },
     {Opcode::match, not_    , match  },
@@ -343,8 +344,14 @@ const X* invoke(L<O>& vs, const X* ip) {
                 s << "nyi: invoke " << op;
                 throw lc2ex(s);
             }
-            if (argc == 1) unop (vs, it->f1);
-            else           binop(vs, it->f2);
+            if      (argc == 1)           unop (vs, it->f1);
+            else if (argc == 2)           binop(vs, it->f2);
+            else if (argc == 3 && it->f3) ternop(vs, it->f3);
+            else {
+                L<C> s;
+                s << "nyi: invoke " << op << " w/ " << argc << " args";
+                throw lc2ex(s);
+            }
         }
         break;
     }
