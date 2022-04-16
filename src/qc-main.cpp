@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
             O flattened_ast(compile(ast, trace));
             gen(module, flattened_ast, trace);
             L<X> code(module["code"_s]);
-            if (object) H(1) << code;
+            if (object) H(1) << code << '\n';
             else        H(1) << disassemble(code);
             H(1) << flush;
         } catch (const Exception& e) {
