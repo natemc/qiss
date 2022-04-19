@@ -281,7 +281,7 @@ namespace {
 
         L<S> k{"type"_s, "node"_s, "depth"_s};
         L<O> v{O(types), O(nodes), O(depth)}; // TODO consider std::move
-        return O(make_table(make_dict(k.release(), v.release())));
+        return O(make_table(k.release(), v.release()));
     }
 
     void Parser::deepen(index_t first, index_t last, X amount) {
