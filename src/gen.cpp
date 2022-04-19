@@ -73,7 +73,7 @@ namespace {
     }
 
     template <class Z> void write_imm(L<X>& code, L<Z> x) {
-        assert(size(x) <= 65535);
+        assert(x.size() <= 65535);
         write(code, immediate_l<Z>, two_bytes(x.size()));
         for (Z z: x) write(code, z);
     }
@@ -85,7 +85,7 @@ namespace {
     }
 
     void write_imm(L<X>& code, L<C> x) {
-        assert(size(x) <= 65535);
+        assert(x.size() <= 65535);
         write(code, Opcode::immstr, two_bytes(x.size()));
         for (C c: x) write(code, c);
     }
