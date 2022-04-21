@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
         if (argc < 3 || strcmp("-o", argv[1])) {
             err << "Usage: " << argv[0] << " -o outfile [infile]\n"
                 << "    If infile is not specified, " << argv[0]
-                << " will read from stdin.\n" << flush;
+                << " will read from stdin.\n";
             return EXIT_FAILURE;
         }
 
         const H out = hopen(argv[2], TRUNCATE);
         if (out == H(-1)) {
-            err << "Could not open output file " << argv[2] << "\n" << flush;
+            err << "Could not open output file " << argv[2] << "\n";
             return EXIT_FAILURE;
         }
         const HCloser hc(out);
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
         const L<C> qasm(argc == 3? read_text(0) : read_text(argv[3]));
         for (X x: parse_qasm(qasm)) out << X::rep(x);
     } catch (const Exception& e) {
-        err << e.what() << '\n' << flush;
+        err << e.what() << '\n';
         return EXIT_FAILURE;
     }
   

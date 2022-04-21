@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 
     L<S> infix_words{"in"_s};
     if (infile) {
-        H(2) << "nyi: kparse file (work-around: stdin redirection)\n" << flush;
+        H(2) << "nyi: kparse file (work-around: stdin redirection)\n";
         return EXIT_FAILURE;
     }
 

@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
         }
     }
     if (infile) {
-        H(2) << "nyi: qc file (work-around: redirect to stdin)\n" << flush;
+        H(2) << "nyi: qc file (work-around: redirect to stdin)\n";
         return EXIT_FAILURE;
     }
 

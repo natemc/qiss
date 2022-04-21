@@ -44,7 +44,7 @@ namespace {
 
 int main(int argc, char* argv[]) {
     if (2 < argc) {
-        H(2) << "Usage: " << argv[0] << " [file]";
+        H(2) << "Usage: " << argv[0] << " [file]\n";
         return EXIT_FAILURE;
     }
 

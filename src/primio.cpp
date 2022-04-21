@@ -23,13 +23,17 @@ namespace {
     H blush(H h);
     
     // stdout and stderr are initialized specially so they can be used for
-    // debugging before write_buffers is initialized.
+    // debugging before write_buffers is initialized. We could use the Schwarz
+    // counter to make sure write_buffers is initialized, but we don't want to,
+    // since write_buffers allocates memory from the buddy allocator.
+
     List<X>* init_static_buf(void* p) {
         static_assert(sizeof(List<X>) == 24);
         assert((bitcast<std::uintptr_t>(p) & 31) == 0);
         List<X>* const buf = new (static_cast<char*>(p) + 8) List<X>;
         buf->a             = Attr::none;
-        buf->m             = 0;
+        buf->apadv         = Opcode(0);
+        buf->arity         = 0;
         buf->r             = 1;
         buf->n             = 0;
         buf->type          = ObjectTraits<X>::typet();
@@ -49,7 +53,7 @@ namespace {
     }
     struct WriteBuffers {
         WriteBuffers() = default;
-        ~WriteBuffers() { for (H h: d.key()) blush(h); }
+        ~WriteBuffers() { blush(H(1)); blush(H(2)); for (H h: d.key()) blush(h); }
         WriteBuffers(const WriteBuffers&) = delete;
         WriteBuffers& operator=(const WriteBuffers&) = delete;
 

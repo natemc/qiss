@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE;
         }
     } catch (const Exception& e) {
-        H(2) << e.what() << '\n' << flush;
+        H(2) << e.what() << '\n';
         return EXIT_FAILURE;
     }
 
