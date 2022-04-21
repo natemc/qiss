@@ -43,10 +43,7 @@ namespace {
         }
 
         template <class X> O list(L<X> x) const {
-            auto f = [&](X e) {
-                Object b(box(e));
-                return B(h.has(O(&b)));
-            };
+            auto f = [&](X e) { return B(h.has(O(e))); };
             return each(f, std::move(x));
         }
 

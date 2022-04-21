@@ -58,14 +58,9 @@ namespace {
         template <class Y>
         O operator()(bfun_t f, O x, Y* first, Y* last) const {
             if (first == last) return enlist(x);
-            Object boxb(box(*first));
-            O r0(f(O(&boxb), std::move(x)));
+            O r0(f(O(*first), std::move(x)));
             if (first + 1 == last) return enlist(std::move(r0));
-            auto g = [&](Y a, Y b){
-                Object ba(box(a));
-                Object bb(box(b));
-                return f(O(&ba), O(&bb));
-            };
+            auto g = [&](Y a, Y b){ return f(O(a), O(b)); };
             return (*this)(g, std::move(r0), first, last);
         }
 
@@ -79,15 +74,8 @@ namespace {
         template <class Y>
         O operator()(bfun_t f, L<Y> y) const {
             if (y.empty()) throw Exception("length: unary scan on empty list");
-            // We cannot call the overload on line 56 here, because
-            // then the result would be one element short.
-            Object box0(box(y[0]));
-            auto g = [&](Y a, Y b){
-                Object ba(box(a));
-                Object bb(box(b));
-                return f(O(&ba), O(&bb));
-            };
-            return (*this)(g, O(&box0), y.begin() + 1, y.end());
+            auto g = [&](Y a, Y b){ return f(O(a), O(b)); };
+            return (*this)(g, O(y[0]), y.begin() + 1, y.end());
         }
 
         O operator()(bfun_t f, L<O> y) const {
@@ -132,5 +120,5 @@ namespace {
     } prior_;
 }
 
-O prior(bfun_t f, O x)      { return prior_(f, x); }
-O prior(bfun_t f, O x, O y) { return prior_(f, x, y); }
+O prior(bfun_t f, O x)      { return prior_(f, std::move(x)); }
+O prior(bfun_t f, O x, O y) { return prior_(f, std::move(x), std::move(y)); }

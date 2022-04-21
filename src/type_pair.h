@@ -1,6 +1,7 @@
 #pragma once
 
 #include <l.h>
+#include <lambda.h>
 #include <o.h>
 #include <ukv.h>
 
@@ -68,14 +69,12 @@ O list_list(F&& f, O x, O y) {
 
 template <class X, class F>
 O list_any_list(F&& f, O x, O y) {
-    auto g = [&](X p, O q){ Object b(box(p)); return f(O(&b), std::move(q)); };
-    return each(g, L<X>(std::move(x)), L<O>(std::move(y)));
+    return each(L2(f(O(x), std::move(y))), L<X>(std::move(x)), L<O>(std::move(y)));
 }
 
 template <class Y, class F>
 O any_list_list(F&& f, O x, O y) {
-    auto g = [&](O p, Y q){ Object b(box(q)); return f(std::move(p), O(&b)); };
-    return each(g, L<O>(std::move(x)), L<Y>(std::move(y)));
+    return each(L2(f(std::move(x), O(y))), L<O>(std::move(x)), L<Y>(std::move(y)));
 }
 
 template <class X, class F>

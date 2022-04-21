@@ -2,6 +2,7 @@
 #include <enlist.h>
 #include <exception.h>
 #include <l.h>
+#include <lambda.h>
 #include <o.h>
 #include <ukv.h>
 
@@ -16,8 +17,7 @@ namespace {
             r[0] = r0;
             r[1] = r1;
             for (index_t i = 2; i < n; ++i) {
-                Object b(box(r[i-1]));
-                O rx(f(O(&b), first[i]));
+                O rx(f(O(r[i-1]), first[i]));
                 if (rx.type() == -OT<R>::typet())
                     r[i] = rx.atom<R>();
                 else {
@@ -62,9 +62,7 @@ namespace {
         template <class Y>
         O operator()(bfun_t f, L<Y> y) const {
             if (y.empty()) throw Exception("length: unary scan on empty list");
-            Object box0(box(y[0]));
-            auto g = [&](O a, Y b){ Object bb(box(b)); return f(a, O(&bb)); };
-            return (*this)(g, O(&box0), y.begin() + 1, y.end());
+            return (*this)(L2(f(x, O(y))), O(y[0]), y.begin() + 1, y.end());
         }
 
         O operator()(bfun_t f, L<O> y) const {
@@ -87,8 +85,7 @@ namespace {
 
         template <class Y>
         O operator()(bfun_t f, O x, L<Y> y) const {
-            auto g = [&](O a, Y b){ Object bb(box(b)); return f(a, O(&bb)); };
-            return (*this)(g, std::move(x), y.begin(), y.end());
+            return (*this)(L2(f(x, O(y))), std::move(x), y.begin(), y.end());
         }
 
         O operator()(bfun_t f, O x, L<O> y) const {

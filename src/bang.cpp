@@ -25,8 +25,7 @@ namespace {
         if (x == 0) return y;
         UKV d(addref(y->dict));
         if (L<S>(d.key()).size() <= x) throw Exception("length: !");
-        Object bb(box(J(x)));
-        O bx(&bb);
+        O bx{J(x)};
         O new_key_cols (take (bx, d.key()));
         O new_key_cells(take (bx, d.val()));
         O new_val_cols (under(bx, d.key()));

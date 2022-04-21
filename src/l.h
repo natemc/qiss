@@ -23,16 +23,13 @@ template <class Z> struct [[nodiscard]] L {
     using reverse_iterator       = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    explicit L(Object* x_): x(x_) {
-        assert(x); assert(x->type == OT<value_type>::typet());
-    }
+    explicit L(Object* x_): L(static_cast<List<value_type>*>(x_)) {}
     explicit L(O x_): L(x_.release()) {}
     explicit L(List<value_type>* x_): x(x_) {
-        assert(x);
         if constexpr(is_prim_v<value_type>)
-            assert(x->type == ObjectTraits<value_type>::typet());
+            assert(!x || x->type == ObjectTraits<value_type>::typet());
         else
-            assert(x->type == ObjectTraits<O>::typet());
+            assert(!x || x->type == ObjectTraits<O>::typet());
     }
     explicit L(size_type n = 0): L(make_list<value_type>(n)) {}
     template <class R> requires std::is_constructible_v<value_type, R>
@@ -60,9 +57,9 @@ template <class Z> struct [[nodiscard]] L {
 #pragma GCC diagnostic pop
 #endif
     }
-    L(const L& x_): x(addref(x_.x)) {}
+    L(const L& x_): x(x_.x? addref(x_.x) : nullptr) {}
     L(L&& x_) noexcept: x(x_.release()) {}
-    ~L() { deref(x); }
+    ~L() { if (x) deref(x); }
     L& operator=(L x_) { std::swap(x, x_.x); return *this; }
 
     operator O()       &  { return O(addref(x)); }
@@ -172,12 +169,12 @@ template <class Z> struct [[nodiscard]] L {
 
     friend void swap(L& a, L& b) { std::swap(a.x, b.x); }
 
-    List<value_type>*       get    ()       { return static_cast<List<value_type>*>(x); }
-    const List<value_type>* get    () const { return static_cast<const List<value_type>*>(x); }
-    List<value_type>*       release()       { return static_cast<List<value_type>*>(std::exchange(x, generic_null())); }
+    List<value_type>*       get    ()       { return x; }
+    const List<value_type>* get    () const { return x; }
+    List<value_type>*       release()       { return std::exchange(x, nullptr); }
 
 private:
-    Object* x;
+    List<value_type>* x;
     friend struct O;
 };
 

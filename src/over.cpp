@@ -11,12 +11,8 @@ namespace {
         template <class Y>
         O operator()(bfun_t f, O x, Y* first, Y* last) const {
             if (first == last) return x;
-            Object boxy(box(*first));
-            O r(f(std::move(x), O(&boxy)));
-            for (++first; first != last; ++first) {
-                Object b(box(*first));
-                r = f(std::move(r), O(&b));
-            }
+            O r(f(std::move(x), O(*first)));
+            for (++first; first != last; ++first) r = f(std::move(r), O(*first));
             return r;
         }
 
@@ -35,8 +31,7 @@ namespace {
         template <class Y>
         O operator()(bfun_t f, L<Y> y) const {
             if (y.empty()) throw Exception("length: unary over on empty list");
-            Object b(box(y[0]));
-            return (*this)(f, O(&b), y.begin() + 1, y.end());
+            return (*this)(f, O(y[0]), y.begin() + 1, y.end());
         }
 
         O operator()(bfun_t f, L<O> y) const {

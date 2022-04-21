@@ -1,6 +1,7 @@
 #include <each.h>
 #include <enlist.h>
 #include <exception.h>
+#include <lambda.h>
 #include <o.h>
 #include <type_pair.h>
 
@@ -9,7 +10,7 @@ namespace {
 
     const struct EachBox1 {
         template <class FUN, class X> O boxing(FUN f, L<X> x) const {
-            return each([&](X e){ Object b(box(e)); return f(O(&b)); }, std::move(x));
+            return each(L1(f(O(x))), std::move(x));
         }
 
         template <class F> O operator()(F&& f, Dict* x) const {
@@ -36,30 +37,17 @@ namespace {
     const struct EachBox2 {
         template <class X, class Y>
         O boxboth(bfun_t f, L<X> x, L<Y> y) const {
-            auto g = [&](X a, Y b){
-                Object boxx(box(a));
-                Object boxy(box(b));
-                return f(O(&boxx), O(&boxy));
-            };
-            return each(g, x, y);
+            return each(L2(f(O(x), O(y))), x, y);
         }
 
         template <class X>
         O boxx(bfun_t f, L<X> x, L<O> y) const {
-            auto g = [&](X a, O b){
-                Object boxx(box(a));
-                return f(O(&boxx), std::move(b));
-            };
-            return each(g, std::move(x), std::move(y));
+            return each(L2(f(O(x), std::move(y))), std::move(x), std::move(y));
         }
 
         template <class Y>
         O boxy(bfun_t f, L<O> x, L<Y> y) const {
-            auto g = [&](O a, Y b){
-                Object boxy(box(b));
-                return f(std::move(a), O(&boxy));
-            };
-            return each(g, std::move(x), std::move(y));
+            return each(L2(f(std::move(x), O(y))), std::move(x), std::move(y));
         }
 
         O operator()(bfun_t f, O x, O y) const {
