@@ -492,7 +492,12 @@ namespace {
     }
 
     void sym_atom_literal(L<X>& code, J line, const Instruction& inst) {
-        string_literal(code, line, inst, Opcode::immsym);
+        if (inst.size() != 1) {
+            string_literal(code, line, inst, Opcode::immsym);
+        } else {
+            write_op(code, Opcode::immsym);
+            write_bytes(code, immlen_t(0));
+        }
     }
 
     void char_list_literal(L<X>& code, J line, const Instruction& inst) {
