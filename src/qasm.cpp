@@ -599,6 +599,7 @@ namespace {
             SIMPLE_OP(',', enlist  , cat);
             SIMPLE_OP('<', iasc    , less);
             SIMPLE_OP('>', idesc   , great);
+            SIMPLE_OP('.', value   , dot);
             THREE_OP ('?', distinct, find, vcond);
             default: throw unknown_opcode(lines[i], inst);
             }
