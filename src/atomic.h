@@ -10,6 +10,22 @@
 
 // This is somewhat nasty, but it removes a tremendous amount of duplication.
 
+const struct LLeach {
+    template <class F> O operator()(F&& f, L<O> x, L<O> y) const {
+        return each(std::forward<F>(f), std::move(x), std::move(y));
+    }
+    template <class F, class X, class Y> requires is_prim_v<X> && is_prim_v<Y>
+    O operator()(F&& f, L<X> x, L<Y> y) const {
+        return each(std::forward<F>(f), std::move(x), std::move(y));
+    }
+    template <class F, class X> requires is_prim_v<X> O operator()(F&& f, L<X> x, L<O> y) const {
+        return list_any_list<X>(std::forward<F>(f), std::move(x), std::move(y));
+    }
+    template <class F, class Y> requires is_prim_v<Y> O operator()(F&& f, L<O> x, L<Y> y) const {
+        return any_list_list<Y>(std::forward<F>(f), std::move(x), std::move(y));
+    }
+} lleach;
+
 template <class Derived> struct Atomic {
     const Derived* This() const { return static_cast<const Derived*>(this); }
 
@@ -17,14 +33,14 @@ template <class Derived> struct Atomic {
         // TODO both x and y are tables
         if (!x.is_dict() || !y.is_dict())
             // The usual llf is each
-            return (*This())(std::move(x), std::move(y), each);
+            return (*This())(lleach, std::move(x), std::move(y));
         // If both x and y are dicts tho, llf is merge_dicts
         UKV dx(std::move(x));
         UKV dy(std::move(y));
         auto llf = [&](auto self, auto xv, auto yv) {
-            return merge_dicts(self, dx.key(), xv, dy.key(), yv);
+            return merge_dicts(self, dx.key(), std::move(xv), dy.key(), std::move(yv));
         };
-        return (*This())(dx.val(), dy.val(), llf);
+        return (*This())(llf, dx.val(), dy.val());
     }
 };
 
@@ -37,8 +53,7 @@ template <class Derived> struct Atomic {
         err << "type (" #op "): " << x->type << '\t' << y->type;       \
         return lc2ex(err);                                             \
     }                                                                  \
-    template <class LLF>                                               \
-    O operator()(O x, O y, LLF llf) const {                            \
+    template <class LLF> O operator()(LLF llf, O x, O y) const {       \
         switch (type_pair(x, y)) {
 
 #define ATOMIC_BEGIN_SIMPLE(NAME, op) ATOMIC_BEGIN(NAME, op, x op y) \
@@ -55,11 +70,11 @@ case TypePair<X,Y>::LL: return llf  (*this, L<X>(std::move(x)), L<Y>(std::move(y
 #define ATOMICOO() case TypePair<O,O>::LL: \
     return llf(*this, L<O>(std::move(x)), L<O>(std::move(y)))
 
-#define ATOMICO(X)                                                                  \
-case TypePair<X,O>::AL: return eachR(*this, std::move(x), L<O>(std::move(y)));      \
-case TypePair<X,O>::LL: return list_any_list<X>(*this, std::move(x), std::move(y)); \
-case TypePair<O,X>::LA: return eachL(*this, L<O>(std::move(x)), std::move(y));      \
-case TypePair<O,X>::LL: return any_list_list<X>(*this, std::move(x), std::move(y))
+#define ATOMICO(X)                                                                   \
+case TypePair<X,O>::AL: return eachR(*this, std::move(x), L<O>(std::move(y)));       \
+case TypePair<X,O>::LL: return llf  (*this, L<X>(std::move(x)), L<O>(std::move(y))); \
+case TypePair<O,X>::LA: return eachL(*this, L<O>(std::move(x)), std::move(y));       \
+case TypePair<O,X>::LL: return llf  (*this, L<O>(std::move(x)), L<X>(std::move(y)))
 
 #define ATOMICD(X)                                                                          \
 case TypePairDict<X>::AD: return atom_dict<X>(*this, std::move(x)     , UKV(std::move(y))); \
