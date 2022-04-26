@@ -1,6 +1,8 @@
 #include <qiss_alloc.h>
+#include <algorithm>
 #include <cstddef>
 #include <new>
+#include <unistd.h>
 
 #if 0
 
@@ -51,11 +53,11 @@ extern "C" {
 
 #else
 
-#include <buddy_allocator.h>
+#include <visible_buddy_allocator.h>
 #include <cstring>
 
 namespace {
-    using Alloc = BuddyAllocator;
+    using Alloc = VisibleBuddyAllocator;
     typename std::aligned_storage<sizeof(Alloc), alignof(Alloc)>::type buf;
     Alloc& lalloc = reinterpret_cast<Alloc&>(buf);
     uint64_t init_counter;
@@ -66,6 +68,7 @@ namespace qiss_alloc_detail {
     QissAllocInit::~QissAllocInit() { if (!--init_counter) lalloc.~Alloc(); }
 }
 
+/*
 #ifdef DOCTEST_CONFIG_DISABLE
 // For reasons that are not obvious from reading doctest.h, doctest requires
 // new to return a 16-byte aligned pointer. Currently, qiss_alloc returns
@@ -74,6 +77,7 @@ void* operator new   (std::size_t sz) { return qiss_alloc(sz).first; }
 void  operator delete(void* p)              noexcept { qiss_free(p); }
 void  operator delete(void* p, std::size_t) noexcept { qiss_free(p); }
 #endif
+*/
 
 uint64_t qiss_allocated() {
     return lalloc.used();
@@ -84,11 +88,28 @@ uint64_t qiss_alloc_size(const void* p) {
 }
 
 std::pair<void*, uint64_t> qiss_alloc(uint64_t bytes) {
-    return lalloc.alloc(bytes);
+    auto [p, sz] = lalloc.alloc(bytes);
+    if (!p) {
+        const char msg[] = "oom allocating ";
+        [[maybe_unused]] ssize_t written = write(2, msg, sizeof msg - 1);
+        char buf[64];
+        std::size_t i = 0;
+        for (uint64_t b = bytes; b; b /= 10, ++i) buf[i] = char('0' + b % 10);
+        std::reverse(buf, buf + i);
+        written = write(2, buf, i);
+        const char msg2[] = " bytes\n";
+        written = write(2, msg2, sizeof msg2 - 1);
+        exit(1);
+    }
+    return std::pair{p, sz};
 }
 
 std::pair<void*, uint64_t> qiss_grow(void* p, uint64_t to_bytes) {
     return lalloc.grow(p, to_bytes);
+}
+
+void qiss_print() {
+    lalloc.print();
 }
 
 extern "C" {

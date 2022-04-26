@@ -9,6 +9,7 @@
 #include <o.h>
 #include <objectio.h>
 #include <primio.h>
+#include <qiss_alloc.h>
 #include <read_file.h>
 #include <sym.h>
 #include <unistd.h>
@@ -63,12 +64,16 @@ int main(int argc, char* argv[]) {
         try {
             const L<C> cmd = trim(line);
             if (cmd.size()) {
-                if (trim(cmd)[0] != C('\\')) {
+                if (cmd[0] != C('\\')) {
                     const O result(interp(env, cmd, infix_words, trace));
                     if (result->type != generic_null_type)
                         H(1) << result << '\n' << flush;
-                } else {
-                    H(1) << "nyi: \\ commands";
+                } else if (1 < cmd.size()) {
+                    if (cmd[1] == C('m')) {
+                        qiss_print();
+                    } else {
+                        H(1) << "nyi\n";
+                    }
                 }
             }
         } catch (const Exception& e) {

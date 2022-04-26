@@ -10,6 +10,7 @@
 [[nodiscard]] uint64_t                   qiss_allocated ();
 extern "C" {  void                       qiss_free      (void* p); }
 [[nodiscard]] std::pair<void*, uint64_t> qiss_grow      (void* p, uint64_t to_bytes);
+              void                       qiss_print();
 
 // This guarantees that the allocator outlives all users.
 // See https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Nifty_Counter
