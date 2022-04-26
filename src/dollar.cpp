@@ -146,7 +146,9 @@ namespace {
         switch (C::rep(to)) {
         case 'b': return cast_to_bool (std::move(y));
         case 'c': return cast_to_char (std::move(y));
+        case 'd': return cast_to_date (std::move(y));
         case 'f': return cast_to_float(std::move(y));
+        case 'i': return cast_to_int  (std::move(y));
         case 'j': return cast_to_long (std::move(y));
         case 's': return cast_to_sym  (std::move(y));
         case 'x': return cast_to_byte (std::move(y));
