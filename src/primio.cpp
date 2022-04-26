@@ -32,8 +32,7 @@ namespace {
         assert((bitcast<std::uintptr_t>(p) & 31) == 0);
         List<X>* const buf = new (static_cast<char*>(p) + 8) List<X>;
         buf->a             = Attr::none;
-        buf->apadv         = Opcode(0);
-        buf->arity         = 0;
+        buf->m             = 0;
         buf->r             = 1;
         buf->n             = 0;
         buf->type          = ObjectTraits<X>::typet();
