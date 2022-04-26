@@ -59,6 +59,7 @@ using ufun_t = O(*)(O);
 using bfun_t = O(*)(O,O);
 using tfun_t = O(*)(O,O,O);
 struct Proc { S module; iaddr_t entry; };
+inline bool operator==(Proc x, Proc y) { return x.module == y.module && x.entry == y.entry; }
 template <> struct is_prim<nfun_t>: std::true_type {};
 template <> struct is_prim<ufun_t>: std::true_type {};
 template <> struct is_prim<bfun_t>: std::true_type {};
@@ -71,10 +72,14 @@ constexpr Type table_type       {'+'};
 struct AO { Opcode op, adverb; };
 template <> struct is_prim<AO>: std::true_type {};
 inline bool operator==(AO x, AO y) { return x.op == y.op && x.adverb == y.adverb; }
+struct AP { Proc proc; Opcode adverb; };
+template <> struct is_prim<AP>: std::true_type {};
+inline bool operator==(AP x, AP y) { return x.proc == y.proc && x.adverb == y.adverb; }
 
 struct Object {
     uint32_t r;
-    uint16_t m; // reserved
+    Opcode   apadv;
+    uint8_t  arity;
     Attr     a;
     Type     type;
     union {
@@ -222,6 +227,22 @@ OTRAITS(ufun  , ufun_t, '(', 15, ufun, nullptr);
 OTRAITS(bfun  , bfun_t, '(', 16, bfun, nullptr);
 OTRAITS(tfun  , tfun_t, '(', 17, tfun, nullptr);
 OTRAITS(proc  , Proc  , '(', 19, proc, Proc());
+template <> struct ObjectTraits<AP> {
+    using type = AP;
+    static constexpr char ch() { return '|'; }
+    static constexpr AP get(const Object* o) {
+        assert(o->type == -typei()); return AP{o->proc, o->apadv}; }
+    static constexpr List<AP>* list(Object* o) {
+        assert(o->type == typei()); return static_cast<List<AP>*>(o); }
+    static constexpr const List<AP>* list(const Object* o) {
+        return list(const_cast<Object*>(o)); }
+    static constexpr const char* name() { return "advproc"; }
+    static constexpr AP null() { return AP({Proc(), Opcode::over}); }
+    static constexpr Object* set(Object* o, AP x) {
+        assert(o->type == -typei()); o->proc = x.proc; o->apadv = x.adverb; return o; }
+    static constexpr int typei() { return 20; }
+    static constexpr Type typet() { return Type(typei()); }
+};
 
 const struct MakeAtom {
     template <class X> [[nodiscard]] Object* operator()(X x) const {
@@ -232,11 +253,12 @@ const struct MakeAtom {
 template <class X> [[nodiscard]] List<X>* make_empty_list(index_t cap = 0) {
     const auto [p, sz] = qiss_alloc(sizeof(List<X>) + std::size_t(cap) * sizeof(X));
     List<X>* const lst = new (p) List<X>;
-    lst->a    = Attr::none;
-    lst->m    = 0;
-    lst->r    = 0;
-    lst->n    = 0;
-    lst->type = ObjectTraits<X>::typet();
+    lst->a     = Attr::none;
+    lst->apadv = Opcode(0);
+    lst->arity = 0;
+    lst->r     = 0;
+    lst->n     = 0;
+    lst->type  = ObjectTraits<X>::typet();
     return lst;
 }
 
@@ -261,11 +283,12 @@ template <class X>
     const auto [p, sz] = qiss_alloc(sizeof(List<X>) + new_n * sizeof(X));
     List<X>* const lst = new (p) List<X>;
     std::uninitialized_copy_n(orig->begin(), orig->n, lst->begin());
-    lst->a    = Attr::none;
-    lst->m    = 0;
-    lst->r    = 0;
-    lst->n    = orig->n;
-    lst->type = orig->type;
+    lst->a     = Attr::none;
+    lst->apadv = Opcode(0);
+    lst->arity = 0;
+    lst->r     = 0;
+    lst->n     = orig->n;
+    lst->type  = orig->type;
     deref(orig);
     return lst;
 }
@@ -283,11 +306,10 @@ inline bool is_keyed_table(const Object* x) {
 }
 
 [[nodiscard]] Object* make_proc(S module, iaddr_t entry, X arity);
-X proc_arity(Object* x);
 
 const struct Box {
     template <class X> requires is_prim_v<X> Object operator()(X x) const {
-        Object r{1, 0, Attr::none, -ObjectTraits<X>::typet()};
+        Object r{1, Opcode(0), 0, Attr::none, -ObjectTraits<X>::typet()};
         return *ObjectTraits<X>::set(&r, x);
     }
 } box;

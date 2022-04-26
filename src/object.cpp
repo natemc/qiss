@@ -22,10 +22,11 @@ namespace {
 
     Object* alloc_object(Type type) {
         Object* const o = oalloc.alloc();
-        o->a    = Attr::none;
-        o->m    = 0;
-        o->r    = 0;
-        o->type = type;
+        o->a     = Attr::none;
+        o->apadv = Opcode(0);
+        o->arity = 0;
+        o->r     = 0;
+        o->type  = type;
         return o;
     }
 }
@@ -41,7 +42,7 @@ Object* alloc_atom(Type t) {
 }
 
 Object* generic_null() {
-    static Object gn = {1, 0, Attr::none, generic_null_type};
+    static Object gn = {1, Opcode(0), 0, Attr::none, generic_null_type};
     return addref(&gn);
 }
 
@@ -49,10 +50,11 @@ Dict* make_dict(Object* k, Object* v) {
     assert(count(O(addref(k))).atom<J>() == count(O(addref(v))).atom<J>());
     const auto [p, sz] = qiss_alloc(sizeof(Dict));
     Dict* const d = new (p) Dict;
-    d->a    = Attr::none;
-    d->m    = 0;
-    d->n    = 0;
-    d->r    = 0;
+    d->a     = Attr::none;
+    d->apadv = Opcode(0);
+    d->arity = 0;
+    d->n     = 0;
+    d->r     = 0;
     d->type = Type('!');
     d->k = k;
     d->v = v;
@@ -78,15 +80,10 @@ index_t table_size(const Object* x) {
 
 Object* make_proc(S module, iaddr_t entry, X arity) {
     Object* const r = alloc_atom(-OT<Proc>::typet());
-    r->m           = X::rep(arity);
-    r->proc.entry  = entry;
-    r->proc.module = module;
+    r->arity        = X::rep(arity);
+    r->proc.entry   = entry;
+    r->proc.module  = module;
     return r;
-}
-
-X proc_arity(Object* x) {
-    assert(x->type == -OT<Proc>::typet());
-    return X(X::rep(x->m));
 }
 
 Dict* make_keyed_table(Object* x, Object* y) {

@@ -53,6 +53,10 @@ L<C>& operator<<(L<C>& buf, AO op) {
     return buf << op.op << op.adverb;
 }
 
+L<C>& operator<<(L<C>& buf, AP op) {
+    return buf << "proc" << op.adverb;
+}
+
 L<C>& operator<<(L<C>& buf, char c) {
     buf.push_back(C(c));
     return buf;

@@ -96,8 +96,10 @@ namespace {
     const char lblue  [] = "\033[30;48;5;195m";
     const char lgreen [] = "\033[30;48;5;193m";
     const char myellow[] = "\033[30;48;5;229m";
+    const char pink   [] = "\033[30;48;5;213m";
+    const char lpink  [] = "\033[30;48;5;225m";
     const char reset  [] = "\033[0m";
-    const char* stripes[][2] = {{lcyan, lblue}, {lgreen, myellow}};
+    const char* stripes[][2] = {{lcyan, lblue}, {lgreen, myellow}, {pink, lpink}};
 
     void do_trace(H h, const X* ip, const L<O>& vs, const char*(&strips)[2]) {
         static int strip = 0;
@@ -254,6 +256,10 @@ void apply_adverb(L<O>& vs, Opcode adverb) {
         o->type = -OT<AO>::typet();
         o->ao   = AO({o->op, adverb});
         break;
+    case -OT<Proc>::typei():
+        o->type = -OT<AP>::typet();
+        o->apadv = adverb;
+        break;
     default:
         H(1) << o << '\t' << o->type << '\n' << flush;
         throw Exception("nyi: adverb other than op");
@@ -328,7 +334,7 @@ const X* invoke(L<O>& vs, const X* ip) {
         return ip;
     }
 
-    O target(vs.pop());
+    const O target(vs.pop());
     switch (int(target.type())) {
     case -OT<bfun_t>::typei():
         binop(vs, target.atom<bfun_t>());
@@ -423,7 +429,7 @@ void do_swap(L<O>& stack) {
 }
 
 O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
-    L<L<X>>  ss;         // snippet stack (may become module stack)
+    L<S>     ms;         // module stack
     L<I>     cs;         // call stack
     L<O>     vs;         // value stack
     L<I>     fp({I(0)}); // frame pointers
@@ -435,6 +441,16 @@ O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
     assert(start <= code.size());
     if (code.size() == start) return O{};
     
+    const auto change_module = [&](S new_module){
+        if (current_module != new_module) {
+            current_module = new_module;
+            module         = env[current_module];
+            code           = L<X>(module["code"_s]);
+            constants      = L<O>(module["constants"_s]);
+            statics        = L<O>(module["statics"_s]);
+        }
+    };
+
     int stripe  = 0;
     for (const X* ip = code.begin() + start; Opcode(X::rep(*ip)) != Opcode::halt; ++ip) {
         if (trace) do_trace(H(1), ip, vs, stripes[stripe]);
@@ -449,11 +465,11 @@ O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
             iaddr_t target;
             memcpy(&target, ip + 1, sizeof target);
             ip += 1 + sizeof target;
-            ss.push_back(code);
+            ms.push_back(current_module);
             cs.push_back(I(I::rep(ip - code.begin())));
             fp.push_back(I(I::rep(vs.size())));
             ip = code.begin() + target - 1;
-            stripe = 1 - stripe;
+            stripe = (stripe + 1) % int(std::size(stripes));
             break;
         }
         case Opcode::jump    : {
@@ -464,12 +480,11 @@ O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
         }
         case Opcode::ret     : {
             if (cs.empty()) return vs.empty()? O() : vs.pop();
-            // TODO change module if needed
             const iaddr_t target = iaddr_t(I::rep(cs.pop()));
             fp.pop();
-            code   = ss.pop();
+            change_module(ms.pop());
             ip     = code.begin() + target - 1;
-            stripe = 1 - stripe;
+            stripe = (stripe? stripe : int(std::size(stripes))) - 1;
             break;
         }
         case Opcode::add     : binop(vs, add);                        break;
@@ -518,25 +533,39 @@ O run(KV<S, KV<S,O>>& env, S module_name, index_t start, bool trace) {
         case Opcode::immx    : ip = push_atom_literal<X>(vs, ip);     break;
         case Opcode::immxv   : ip = push_list_literal<X>(vs, ip);     break;
         case Opcode::invoke  : {
-            if (vs.back().type() != -OT<Proc>::typet())
-                ip = invoke(vs, ip);
-            else {
+            if (vs.back().type() != -OT<Proc>::typet()) {
+//                if (vs.back().type() != -OT<AP>::typet())
+                    ip = invoke(vs, ip);
+/*                else {
+                    const O target = vs.pop();
+                    const AP ap = target.atom<AP>();
+                    switch (ap.adverb) {
+                    case Opcode::over:
+                        if (ap.proc.arity == 1) {
+                            if (argc != 1) throw Exception("rank: more than 1 arg pass to f/ where f is unary");
+                            // We have to come up with a way to say "run this bytecode in this context"
+                            // converge(..)
+                        }
+                        else // reduce
+                        break;
+                    default: {
+                        L<C> s;
+                        s << "nyi: invoke adverbed proc" << ap.adverb;
+                        throw lc2ex(s);
+                    }
+                }*/
+            } else {
                 const X::rep argc(*++ip);
                 O proc(vs.pop());
-                const X::rep arity(proc_arity(proc.get()));
+                const X::rep arity(proc->arity);
                 if (arity < argc) throw Exception("rank");
                 if (argc < arity) throw Exception("nyi: partial application (invoke)");
-                ss.push_back(code);
+                ms.push_back(current_module);
                 cs.push_back(I(I::rep(ip + 1 - code.begin())));
                 fp.push_back(I(I::rep(vs.size())));
-                if (current_module != proc->proc.module) {
-                    // TODO ret needs to revert the module; ss -> ms
-                    KV<S,O> m(env[proc->proc.module]);
-                    code = L<X>(m["code"_s]);
-                }
+                change_module(proc->proc.module);
                 ip = code.begin() + proc->proc.entry - 1;
-                stripe = 1 - stripe;
-                // TODO debug
+                stripe = (stripe + 1) % int(std::size(stripes));
             }
             break;
         }

@@ -27,7 +27,7 @@ namespace {
 
     template <class X> using OT = ObjectTraits<X>;
 
-    template <class Z> decltype(auto) print_atom(Z&& h,  const O& x) {
+    template <class Z> decltype(auto) print_atom(Z&& h, O x) {
         assert(x.type() < 0);
         switch (-int(x.type())) {
         case OT<B>::typei()     : return h << x->b;
@@ -41,6 +41,7 @@ namespace {
         case OT<T>::typei()     : return x->t.is_null()? h << x->t << 't' : h << x->t;
         case OT<X>::typei()     : return h << "0x" << x->x;
         case OT<AO>::typei()    : return h << x->ao;
+        case OT<AP>::typei()    : return h << x->ao;
         case OT<Opcode>::typei(): return h << x->op;
         case OT<bfun_t>::typei(): return h << "builtin";
         case -int(generic_null_type): return h << "::";
@@ -127,7 +128,7 @@ namespace {
         return std::forward<S>(h);
     }
 
-    template <class Z> decltype(auto) print_list(Z&& h, const O& x) {
+    template <class Z> decltype(auto) print_list(Z&& h, O x) {
         assert(x.is_list());
 #define CS(X) case OT<X>::typei(): print_list(h, L<X>(std::move(x))); break
         switch (int(x.type())) {
@@ -144,7 +145,7 @@ namespace {
         CS(J);
         case OT<O>::typei(): {
             L<O> os(std::move(x));
-            if (x->n <= 1)
+            if (os.size() <= 1)
                 print_list_no_suffix(h, std::move(os));
             else
                 print_list_no_suffix(h << '(', std::move(os), ';') << ')'; 
@@ -194,9 +195,9 @@ namespace {
         }
     } stringify_list_elements;
 
-    L<L<C>> stringify_table(const O& x);
+    L<L<C>> stringify_table(O x);
 
-    L<L<C>> stringify_elements(const O& x) {
+    L<L<C>> stringify_elements(O x) {
 #define CS(X) case OT<X>::typei(): return stringify_list_elements(L<X>(std::move(x)))
         switch (int(x.type())) {
         CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J); CS(S); CS(T); CS(X);
@@ -208,9 +209,9 @@ namespace {
         return L<L<C>>{}; // unreachable
     }
 
-    template <class S> decltype(auto) print_dict(S&& h, const O& x) {
+    template <class S> decltype(auto) print_dict(S&& h, O x) {
         assert(x.is_dict());
-        UKV d(x);
+        UKV d(std::move(x));
         const L<L<C>> ks(stringify_elements(d.key()));
         const L<L<C>> vs(stringify_elements(d.val()));
         const int kw = int(max_width(ks));
@@ -222,7 +223,7 @@ namespace {
         return h;
     }
 
-    template <class FN> auto from_list(FN&& f, const O& x) {
+    template <class FN> auto from_list(FN&& f, O x) {
 #define CS(X) case OT<X>::typei(): return std::forward<FN>(f)(L<X>(std::move(x)))
         switch (int(x.type())) {
         CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J); CS(S); CS(T); CS(X);
@@ -233,7 +234,7 @@ namespace {
         return std::forward<FN>(f)(L<O>(std::move(x))); // unreachable
     }
 
-    template <class Z> decltype(auto) print_table(Z&& h, const O& x) {
+    template <class Z> decltype(auto) print_table(Z&& h, O x) {
         assert(x.is_table());
         const int     tw(terminal_width());
         const L<L<C>> cn(stringify_elements(L<S>(addref(dk(x->dict)))));
@@ -277,7 +278,7 @@ namespace {
         return v[0]->n <= viewport_height? h : h << "\n..";
     }
 
-    L<L<C>> stringify_table(const O& x) {
+    L<L<C>> stringify_table(O x) {
         assert(x.is_table());
         const int     tw(terminal_width());
         const L<L<C>> cn(stringify_elements(L<S>(addref(dk(x->dict)))));
@@ -325,11 +326,13 @@ namespace {
         return result;
     }
 
-    template <class S> decltype(auto) print_object(S&& h, const O& x) {
-        if      (x.is_atom()) print_atom (h, x);
-        else if (x.is_dict()) print_dict (h, x);
-        else if (x.is_list()) print_list (h, x);
-        else                  print_table(h, x);
+    template <class S> decltype(auto) print_object(S&& h, O x) {
+        assert(x);
+
+        if      (x.is_atom()) print_atom (h, std::move(x));
+        else if (x.is_dict()) print_dict (h, std::move(x));
+        else if (x.is_list()) print_list (h, std::move(x));
+        else                  print_table(h, std::move(x));
         return h;
     }
 
@@ -338,7 +341,7 @@ namespace {
               case  OT<X>::typei(): return h << char(toupper(OT<X>::ch()))
         switch (int(x)) {
         CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J);
-        CS(S); CS(T); CS(X); CS(AO); CS(Opcode);
+        CS(S); CS(T); CS(X); CS(AO); CS(AP); CS(Opcode);
         default: return h << char(int(x));
         }
 #undef CS
@@ -347,8 +350,9 @@ namespace {
 
 H     operator<<(H     h, Opcode      x) { return h << char(x); }
 H     operator<<(H     h, AO          x) { return h << x.op << x.adverb; }
+H     operator<<(H     h, AP          x) { return h << "proc" << x.adverb; }
 H     operator<<(H     h, const L<C>& x) { for (C c: x) h << c; return h; }
-H     operator<<(H     h, const O&    x) { return print_object(h, x); }
+H     operator<<(H     h, O           x) { return print_object(h, std::move(x)); }
 H     operator<<(H     h, Type        x) { return print_type(h, x); }
-L<C>& operator<<(L<C>& h, const O&    x) { return print_object(h, x); }
+L<C>& operator<<(L<C>& h, O           x) { return print_object(h, std::move(x)); }
 L<C>& operator<<(L<C>& h, Type        x) { return print_type(h, x); }

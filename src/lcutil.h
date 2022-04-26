@@ -31,6 +31,7 @@ L<C>& operator<<(L<C>& buf, const Object*  x);
 L<C>& operator<<(L<C>& buf, Adverb         x);
 L<C>& operator<<(L<C>& buf, Opcode         x);
 L<C>& operator<<(L<C>& buf, AO             x);
+L<C>& operator<<(L<C>& buf, AP             x);
 L<C>& operator<<(L<C>& buf, std::pair<const char*, const char*> x);
 L<C>& operator<<(L<C>& buf, std::pair<const C*, const C*> x);
 L<C>& escape(L<C>& buf, C x);

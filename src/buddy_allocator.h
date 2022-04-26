@@ -24,9 +24,9 @@ private:
     static_assert(sizeof(void*) == sizeof(uint64_t));
     static_assert(8 <= buckets);
 
-    // free_table has one free list per bucket
-    // Chunk size doubles with each bucket increment
-    // Chunks from various Region instances share these free lists.
+    // free_table has one free list per bucket size
+    // Block size doubles with each bucket increment
+    // Blocks from various region instances share these free lists.
     // bucket    blksz
     // -------------------------------------------------------------
     // 0         32
@@ -73,11 +73,12 @@ private:
 #endif
         };
 
+        Block(void* r, bucket_t bucket) { set_region(r, bucket); }
         bool        in_use       () const;
         void        mark_used    ();
         void        mark_unused  ();
         bucket_t    bucket       () const;
-        void        set_bucket   (bucket_t bucket);
+        Block*      set_bucket   (bucket_t bucket);
         void*       region       ();
         const void* region       () const;
         bucket_t    region_bucket() const;

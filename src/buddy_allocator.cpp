@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstring>
 #include <doctest.h>
+#include <format.h>
 #include <new>
 //#include <primio.h>
 #include <system_alloc.h>
@@ -33,7 +34,7 @@ BuddyAllocator::~BuddyAllocator() {
         std::reverse(buf, buf + i);
         [[maybe_unused]] ssize_t written = write(2, buf, i);
         const char msg[] = " bytes leaked\n";
-        written = write(2, msg, sizeof msg);
+        written = write(2, msg, sizeof msg - 1);
     }
     assert(allocated == 0);
 }
@@ -57,19 +58,14 @@ std::pair<void*, uint64_t> BuddyAllocator::alloc(uint64_t size) {
             //void* const  r = alloc_region_fully_aligned(bucket_to_bytes(b));
             void* const  r = alloc_region(bucket_to_bytes(b));
             if (!r) return {nullptr, 0ull};
-            block          = new (r) Block;
-            block->set_region(r, b);
+            block          = new (r) Block(r, b);
         }
 
         void* const    region        = block->region();
         const bucket_t region_bucket = block->region_bucket();
         while (b > bucket) { // split selected/allocated chunk onto free lists
-            --b;
-            char* const   p     = reinterpret_cast<char*>(block) + bucket_to_bytes(b);
-            Block* const right = new (p) Block;
-            right->set_bucket(b);
-            right->set_region(region, region_bucket);
-            cons(right);
+            char* const p = reinterpret_cast<char*>(block) + bucket_to_bytes(--b);
+            cons((new (p) Block(region, region_bucket))->set_bucket(b));
         }
         block->set_bucket(bucket);
     }
@@ -78,12 +74,13 @@ std::pair<void*, uint64_t> BuddyAllocator::alloc(uint64_t size) {
     const uint64_t allocated_bytes = bucket_to_bytes(bucket);
     allocated += allocated_bytes;
 //    H(1) << "LIST " << block << "\trequested: "
-//              << std::setw(4) << size
-//              << "\tneeded: " << bytes
-//              << "\tbucket: " << int(block->bucket())
-//              << "\tbucket size: " << std::setw(4) << allocated_bytes
-//              << "\tmeta: " << std::hex << block->meta << std::dec
-//              << "\tx: " << (&block->x) << '\n' << flush;
+//         << right(4, size)
+//         << "\tneeded: " << bytes
+//         << "\tbucket: " << int(block->bucket())
+//         << "\tbucket size: " << right(4, allocated_bytes)
+//         << "\tmeta: " << reinterpret_cast<void*>(block->meta)
+//         << "\tx: " << (&block->x) << '\n' << flush;
+//         << '\n' << flush;*/
 //    print_list(H(1) << "//// free list " << int(bucket) << ": ",
 //               free_table[bucket]) << flush;
     return {block->x, allocated_bytes - offsetof(Block, x)};
@@ -92,9 +89,10 @@ std::pair<void*, uint64_t> BuddyAllocator::alloc(uint64_t size) {
 void BuddyAllocator::free(void* p) {
     Block* const block = header(p);
     assert(block->in_use());
-//    H(1) << "FREE " << p << "\tbucket: " << int(block->bucket())
-//              << "\tmeta: " << std::hex << block->meta << std::dec
-//              << '\n' << flush;
+//    H(1) << "FREE " << block << "\t\t\t\t\tbucket: " << int(block->bucket())
+//         << "\tbucket size: " << right(4, bucket_to_bytes(block->bucket()))
+//         << "\tmeta: " << reinterpret_cast<void*>(block->meta)
+//         << '\n' << flush;*/
     allocated -= bucket_to_bytes(block->bucket());
     free_block(block);
 
@@ -277,9 +275,10 @@ void BuddyAllocator::Block::mark_unused ()       { meta &= ~(1ull<<63); }
 BuddyAllocator::bucket_t BuddyAllocator::Block::bucket() const {
     return meta & 63;
 }
-void BuddyAllocator::Block::set_bucket(bucket_t bucket) {
+BuddyAllocator::Block* BuddyAllocator::Block::set_bucket(bucket_t bucket) {
     assert(bucket < buckets);
     meta = (meta & uint64_t(-64)) | bucket;
+    return this;
 }
 
 void* BuddyAllocator::Block::region() {
