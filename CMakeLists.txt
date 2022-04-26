@@ -27,6 +27,13 @@ include(cmake/Sanitizers.cmake)
 enable_sanitizers(project_options)
 include(cmake/StaticAnalyzers.cmake)
 
+set(MEMORY
+    src/buddy_allocator.cpp
+    src/fixed_size_allocator.cpp
+    src/qiss_alloc.cpp
+    src/system_alloc.cpp
+    src/visible_buddy_allocator.cpp)
+
 set(CORE
     src/adverb.cpp
     src/arith.cpp
@@ -35,7 +42,6 @@ set(CORE
     src/bang.cpp
     src/binary2unary.cpp
     src/bits.cpp
-    src/buddy_allocator.cpp
     src/cat.cpp
     src/compile.cpp
     src/converge.cpp
@@ -51,7 +57,6 @@ set(CORE
     src/fill.cpp
     src/find.cpp
     src/first.cpp
-    src/fixed_size_allocator.cpp
     src/flip.cpp
     src/floor.cpp
     src/format.cpp
@@ -85,7 +90,6 @@ set(CORE
     src/prim_parse.cpp
     src/primio.cpp
     src/prior.cpp
-    src/qiss_alloc.cpp
     src/relop.cpp
     src/returning.cpp
     src/reverse.cpp
@@ -96,7 +100,6 @@ set(CORE
     src/sum.cpp
     src/sym.cpp
     src/symtrie.cpp
-    src/system_alloc.cpp
     src/take.cpp
     src/terminal_width.cpp
     src/type_pair.cpp
@@ -127,7 +130,7 @@ set(COMPILE
 #target_include_directories(qisscomp PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 #target_link_libraries(qisscomp PRIVATE project_options project_warnings)
 
-add_library(qisscore ${CORE})
+add_library(qisscore ${CORE} ${MEMORY})
 target_compile_definitions(qisscore PUBLIC DOCTEST_CONFIG_DISABLE)
 target_include_directories(qisscore PUBLIC src)
 target_link_libraries(qisscore PRIVATE project_options project_warnings)
@@ -226,7 +229,8 @@ add_executable(utest
     src/test-main.cpp
     src/vm.cpp
     ${COMPILE}
-    ${CORE})
+    ${CORE}
+    ${MEMORY})
 target_include_directories(utest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(utest PUBLIC src)
 target_link_libraries(utest PRIVATE project_options project_warnings lex)
