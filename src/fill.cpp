@@ -24,7 +24,7 @@ namespace {
                 return UKV(std::move(k), (*this)(std::move(v)));
             }
             case '+': return flip((*this)(flip(std::move(y))));
-            default : throw Exception("type: _ (fill)");
+            default : throw Exception("type: ^ (fill)");
             }
 #undef CS
         }
@@ -42,7 +42,7 @@ O fill(O x, O y) {
         return fill_(F(F::rep(J::rep(x.atom<J>()))), std::move(y));
 #define CS(X) case -OT<X>::typei(): return fill_(x.atom<X>(), std::move(y))
     switch (int(x.type())) {
-    CS(B); CS(C); CS(D); CS(F); CS(S); CS(T); CS(X);
+    CS(B); CS(C); CS(D); CS(F); CS(I); CS(J); CS(S); CS(T); CS(X);
     default : throw Exception("type ^ (fill)");
     }
 #undef CS
