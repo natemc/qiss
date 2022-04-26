@@ -106,6 +106,7 @@ set(CORE
     src/ul.cpp
     src/value.cpp
     src/vcond.cpp
+    src/visible_buddy_allocator.cpp
     src/where.cpp)
 
 set(COMPILE

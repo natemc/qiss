@@ -215,7 +215,8 @@ const X* local(const L<I>& frames, L<O>& stack, const X* ip) {
 const X* rot(L<O>& stack, const X* ip) {
     uint8_t n;
     memcpy(&n, ip + 1, sizeof n);
-    std::rotate(stack.end() - n - 1, stack.end() - n, stack.end());
+    if (n != stack.size())
+        std::rotate(stack.end() - n - 1, stack.end() - n, stack.end());
     return ip + sizeof n;
 }
 

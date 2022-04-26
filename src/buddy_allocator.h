@@ -16,6 +16,8 @@ struct BuddyAllocator {
     [[nodiscard]] uint64_t                   used ()                           const;
   
 private:
+    friend struct VisibleBuddyAllocator;
+
     using bucket_t = uint8_t;
     static constexpr uint64_t smallest_bucket_size = 32ull;
     static constexpr bucket_t buckets              = 48;
