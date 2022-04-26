@@ -5,7 +5,9 @@
 #include <iterator>
 #include <kv.h>
 #include <l.h>
+#include <lambda.h>
 #include <lcutil.h>
+#include <merge_dicts.h>
 #include <o.h>
 #include <objectio.h>
 #include <type_pair.h>
@@ -25,6 +27,11 @@ case TypePair<O,X>::LL: return (*this)(L<O>(std::move(x)), L<X>(std::move(y)))
 
 namespace {
     template <class X> using OT = ObjectTraits<X>;
+
+    const struct Second {
+        template <class X>          O operator()(X, O y) const { return y; }
+        template <class X, class Y> O operator()(X, Y y) const { return O(std::move(y)); }
+    } second;
 
     const struct Cat {
         template <class X> auto operator()(X x, X y) const { return L<X>{x, y}; }
@@ -92,9 +99,66 @@ namespace {
             r.append(y.begin(), y.end());
             return r;
         }
-    
-        UKV operator()(UKV, UKV) const {
-            throw Exception("nyi , on dicts");
+
+        template <class K, class X, class Y>
+        UKV cat_dissimilar_dicts(L<K> xk, L<X> xv, L<K> yk, L<Y> yv) const {
+            return merge_dicts(second, std::move(xk), std::move(xv), std::move(yk), std::move(yv));
+        }
+
+        template <class K> UKV cat_dissimilar_dicts(L<K> xk, O xv, L<K> yk, O yv) const {
+#define CS(X,Y)                                                                  \
+    case TypePair<X,Y>::LL: return cat_dissimilar_dicts(                         \
+        std::move(xk), L<X>(std::move(xv)), std::move(yk), L<Y>(std::move(yv))); \
+    case TypePair<Y,X>::LL: return cat_dissimilar_dicts(                         \
+        std::move(xk), L<Y>(std::move(xv)), std::move(yk), L<X>(std::move(yv)))
+            switch (type_pair(xv, yv)) {
+            CS(B,C); CS(B,D); CS(B,F); CS(B,H); CS(B,I); CS(B,J); CS(B,S); CS(B,T); CS(B,X); CS(B,O);
+            CS(C,D); CS(C,F); CS(C,H); CS(C,I); CS(C,J); CS(C,S); CS(C,T); CS(C,X); CS(C,O);
+            CS(D,F); CS(D,H); CS(D,I); CS(D,J); CS(D,S); CS(D,T); CS(D,X); CS(D,O);
+            CS(F,H); CS(F,I); CS(F,J); CS(F,S); CS(F,T); CS(F,X); CS(F,O);
+            CS(H,I); CS(H,J); CS(H,S); CS(H,T); CS(H,X); CS(H,O);
+            CS(I,J); CS(I,S); CS(I,T); CS(I,X); CS(I,O);
+            CS(J,S); CS(J,T); CS(J,X); CS(J,O);
+            CS(S,T); CS(S,X); CS(S,O);
+            CS(T,X); CS(T,O);
+            CS(X,O);
+            default: throw Exception("nyi , on dicts (cat_dissimilar_dicts)");
+            }
+#undef CS
+        }
+
+        template <class K, class V>
+        UKV cat_similar_dicts(L<K> xk, L<V> xv, L<K> yk, L<V> yv) const {
+            return merge_dicts(
+                [](V,V y){return y;}, std::move(xk), std::move(xv), std::move(yk), std::move(yv));
+        }
+
+        template <class K> UKV cat_dicts(L<K> xk, O xv, L<K> yk, O yv) const {
+            if (xv.type() != yv.type())
+                return cat_dissimilar_dicts(
+                    std::move(xk), std::move(xv), std::move(yk), std::move(yv));
+#define CS(X)                                                                 \
+    case OT<X>::typei(): return cat_similar_dicts(                            \
+     std::move(xk), L<X>(std::move(xv)), std::move(yk), L<X>(std::move(yv)));
+            switch (int(xv.type())) {
+            CS(B); CS(C); CS(D); CS(F); CS(H); CS(J); CS(S); CS(T); CS(X); CS(O);
+            default: throw Exception("nyi , on dicts (cat_dicts)");
+            }
+#undef CS
+        }
+
+        UKV operator()(UKV x, UKV y) const {
+            if (x.key().type() != y.key().type())
+                throw Exception("type: cannot merge 2 dicts w/different key types");
+            auto [xk, xv] = std::move(x).kv();
+            auto [yk, yv] = std::move(y).kv();
+#define CS(X) case OT<X>::typei():                                      \
+    return cat_dicts(L<X>(std::move(xk)), xv, L<X>(std::move(yk)), yv);
+            switch (int(xk.type())) {
+            CS(B); CS(C); CS(D); CS(F); CS(H); CS(J); CS(S); CS(T); CS(X); CS(O);
+            default: throw Exception("nyi , on dicts (operator())");
+            }
+#undef CS
         }
     
         O tables(O x, O y) const {
@@ -131,10 +195,9 @@ namespace {
             DXX(S,S); DXY(S,T); DXY(S,X); DXO(S);
             DXX(T,T); DXY(T,X); DXO(T);
             DXX(X,X); DXO(X);
-            case TypePair<O,O>::LL:
-                return (*this)(L<O>(std::move(x)), L<O>(std::move(y)));
-            case ('!' << 8) | '!': return (*this)(UKV(std::move(x)), UKV(std::move(y)));
-            case ('+' << 8) | '+': return tables(x, y);
+            case TypePair<O,O>::LL: return (*this)(L<O>(std::move(x)), L<O>(std::move(y)));
+            case ('!' << 8) | '!' : return (*this)(UKV(std::move(x)), UKV(std::move(y)));
+            case ('+' << 8) | '+' : return tables(x, y);
             default: {
                 L<C> s;
                 s << "nyi: , for types " << x.type() << " and " << y.type();

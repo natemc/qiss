@@ -7,8 +7,7 @@ struct [[nodiscard]] O {
     template <class X> using OT = ObjectTraits<X>;
 
     O(): x(generic_null()) {}
-    template <class X> requires is_prim_v<X> explicit O(X x_): x(make_atom(x_)) {
-    }
+    template <class X> requires is_prim_v<X> explicit O(X x_): x(make_atom(x_)) {}
     explicit O(Object* x_): x(x_) { assert(x_); }
     O(const O& x_): x(addref(x_.x)) {}
     O(O&& x_) noexcept: x(x_.release()) {}
