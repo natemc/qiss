@@ -95,7 +95,7 @@ bool fuzzy_match(double x, double y);
 PRIM_BEGIN(F, double, fuzzy_match(x, y.x), x < y.x, std::isnan(x))
     explicit F(B o): x(B::rep(o)) {}
     explicit F(I o): x(I::rep(o)) {}
-    explicit F(J o): x(J::rep(o)) {}
+    explicit F(J o): x(F::rep(J::rep(o))) {}
     explicit F(X o): x(X::rep(o)) {}
 PRIM_END(F)
 constexpr F NF = F(std::numeric_limits<F::rep>::quiet_NaN());

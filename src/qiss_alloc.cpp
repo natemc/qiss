@@ -57,15 +57,15 @@ extern "C" {
 #include <cstring>
 
 namespace {
-    using Alloc = VisibleBuddyAllocator;
-    typename std::aligned_storage<sizeof(Alloc), alignof(Alloc)>::type buf;
-    Alloc& lalloc = reinterpret_cast<Alloc&>(buf);
+    using Allocator = VisibleBuddyAllocator;
+    typename std::aligned_storage<sizeof(Allocator), alignof(Allocator)>::type buf;
+    Allocator& lalloc = reinterpret_cast<Allocator&>(buf);
     uint64_t init_counter;
 }
 
 namespace qiss_alloc_detail {
-    QissAllocInit:: QissAllocInit() { if (!init_counter++) new (&lalloc) Alloc; }
-    QissAllocInit::~QissAllocInit() { if (!--init_counter) lalloc.~Alloc(); }
+    QissAllocInit:: QissAllocInit() { if (!init_counter++) new (&lalloc) Allocator; }
+    QissAllocInit::~QissAllocInit() { if (!--init_counter) lalloc.~Allocator(); }
 }
 
 /*

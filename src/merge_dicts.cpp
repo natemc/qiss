@@ -10,10 +10,9 @@
 TEST_CASE("Adding two conforming dicts adds the corresponding values") {
     L<S> xk{"a"_s, "b"_s, "c"_s};
     L<J> xv{1,2,3};
-    L<S> yk{xk};
     L<J> yv{10,20,30};
-    KV<S,J> e{L<S>{xk}, L<J>{11,22,33}};
-    KV<S,J> r(merge_dicts(L2(x+y), xk, xv, yk, yv));
+    KV<S,J> e{xk, L<J>{11,22,33}};
+    KV<S,J> r(merge_dicts(L2(x+y), xk, xv, xk, yv));
     CHECK(match_(e, r));
 }
 
