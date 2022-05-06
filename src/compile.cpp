@@ -59,32 +59,32 @@ namespace {
         return parent;
     }
 
-    L<I> ancestor_of_type(KV<S,O>& ast, L<X> types) {
+    L<I> ancestor_of_type(KV<S,O>& ast, L<C> types) {
         // See Hsu page 89
         // b:Ast::lambda=ast`type; {?[b x;x;x x]}/[ast`parent]
         L<B> b(in(ast["type"_s], std::move(types)));
         auto f = [&](L<I> x){ return L<I>(vcond(b[x], x, x[x])); };
-        return converge_(f, L<I>(ast["parent"_s]));
+        return converge(f, L<I>(ast["parent"_s]));
     }
 
     O nb(O x) { H(1) << " NB " << x << '\n' << flush; return x; }
     O nb(const char* s, O x) { H(1) << " NB " << s << ": " << x << '\n' << flush; return x; }
 
     L<I> direct_children_of_type(KV<S,O>& ast,
-                                 L<X>     types,
+                                 L<C>     types,
                                  L<I>     start)
     {
         // See Hsu page 89
         // b:Ast::lambda=ast[`type]@p:ast`parent; {?[b x;x;p x]}/[ast`parent]
         L<I> p(ast["parent"_s]);
-        L<X> t(ast["type"_s]);
+        L<C> t(ast["type"_s]);
         L<B> b(!t.in(types) & t[p].in(types)); // cppcheck-suppress clarifyCondition
         auto f = [&](L<I> x){ return L<I>(vcond(b[x], x, p[x])); };
-        return converge_(f, start);
+        return converge(f, start);
     }
 
     L<I> lexical_contour(KV<S,O>& ast) {
-        L<X> scope_types{X::rep(Ast::lambda), X::rep(Ast::module)};
+        L<C> scope_types{C::rep(Ast::lambda), C::rep(Ast::module)};
         return ancestor_of_type(ast, scope_types);
     }
 
@@ -94,8 +94,8 @@ namespace {
         // functions, there is only one root (zero), and it ain't a lambda!
         // See Hsu page 101
         // i:&(Ast::lambda=ast`type)&~p=!#p:ast`parent
-        L<X> type(ast["type"_s]);
-        L<I> lams(&(type == X::rep(Ast::lambda)));
+        L<C> type(ast["type"_s]);
+        L<I> lams(&(type == C::rep(Ast::lambda)));
 
         L<O> node(ast["node"_s]);
         // Must do this now, since we overwrite these node cells below.
@@ -103,10 +103,10 @@ namespace {
 
         // The indices of the new nodes are (#p)+!#i    See Hsu page 102
         L<I> new_node(tili(lams.size()) + I(I::rep(type.size())));
-        L<X> new_type(replicate(lams.size(), X(X::rep(Ast::lambda))));
+        L<C> new_type(replicate(lams.size(), C(C::rep(Ast::lambda))));
 
         // Next, change old lambda nodes into refs. See Hsu p. 104
-        DO(lams) type[lams[i_]] = X(X::rep(Ast::ref)); // cppcheck-suppress unreadVariable
+        DO(lams) type[lams[i_]] = C(C::rep(Ast::ref)); // cppcheck-suppress unreadVariable
         DO(lams) node[lams[i_]] = O(new_node[i_]);     // cppcheck-suppress unreadVariable
 
         // To save the children, we must fix those elements of ast[parent] that
@@ -204,9 +204,9 @@ namespace {
         KV<S, O> ast        (+ast_);
         L<I>     p          (ast["parent"_s]);
         L<I>     r          (ast["contour"_s]);
-        L<X>     t          (ast["type"_s]);
+        L<C>     t          (ast["type"_s]);
         // Unlike Hsu, we lift all node types except lambda and module (so far)
-        L<X>     root_types {X::rep(Ast::lambda), X::rep(Ast::module)};
+        L<C>     root_types {C::rep(Ast::lambda), C::rep(Ast::module)};
         L<I>     to_lift    (&!t.in(root_types));
         L<I>     heads      (direct_children_of_type(ast, root_types, to_lift));
         L<I>     new_parents(p[heads]);
@@ -284,19 +284,19 @@ namespace {
         L<O>    n  (ast["node"_s]);
         L<I>    p  (ast["parent"_s]);
         L<I>    r  (ast["contour"_s]);
-        L<X>    t  (ast["type"_s]);
+        L<C>    t  (ast["type"_s]);
 
         // Section 3.10 (pp. 127-129)
         // The contour for an explicit binding is the binding node's contour
         // entry, but for a param it's the parent (a lambda's contour is one
         // too high for its params).  Perhaps we should have left in a formals
         // node for uniformity.
-        L<I> b     (&(t == X::rep(Ast::bind)));
+        L<I> b     (&(t == C::rep(Ast::bind)));
         L<S> bnames(b.empty()? L<S>{} : L<S>(at(n, b)));
         L<I> pc; // parameter contours
         L<S> pn; // parameter names
         KV<I,I> pcount; // parameter count for each lambda
-        L<I> lams(&(t == X::rep(Ast::lambda)));
+        L<I> lams(&(t == C::rep(Ast::lambda)));
         for (I lam: lams) {
             L<S> params(n[lam]);
             pcount.add(lam, I(I::rep(params.size())));
@@ -350,7 +350,7 @@ namespace {
             RETURNING(L<I>(d + (i != up)), i = up);
         };
         // depth of binding relative to module scope
-        L<I> depth(converge_(scope_depth, L<I>(framesz.size(), I(0))));
+        L<I> depth(converge(scope_depth, L<I>(framesz.size(), I(0))));
 
         // These frame numbers are the frame in which a name is bound counting
         // from zero==module frame.  To use these frame numbers at runtime, we
@@ -375,7 +375,7 @@ namespace {
     void resolve(O ast_, O frames_, KV<I,I>& frame_bumps) {
         KV<S,O> ast   (+ast_);
         KV<S,O> frames(+frames_);
-        L<X> t        (ast["type"_s]);
+        L<C> t        (ast["type"_s]);
         L<O> n        (ast["node"_s]);
         L<I> p        (ast["parent"_s]);
         L<I> r        (ast["contour"_s]);
@@ -383,21 +383,21 @@ namespace {
 
         L<I> lc;
         L<S> ln;
-        for (I lam: &(t == X::rep(Ast::lambda))) {
+        for (I lam: &(t == C::rep(Ast::lambda))) {
             for (S ns: L<S>(n[lam])) {
                 lc.emplace_back(p[lam]);
                 ln.emplace_back(ns);
             }
         }
 
-        L<I> b(&(t == X::rep(Ast::bind)));
+        L<I> b(&(t == C::rep(Ast::bind)));
         if (b.empty() && lc.empty()) {
             ast.add("distance"_s, L<I>(r.size(), NI));
             ast.add("frame"_s   , L<I>(r.size(), NI));
             ast.add("slot"_s    , L<I>(r.size(), NI));
             return;
         }
-        L<I> v(&(t == X::rep(Ast::id))); // var refs; may be bound locally or free
+        L<I> v(&(t == C::rep(Ast::id))); // var refs; may be bound locally or free
         L<I> y(cat(v, b));               // indices of vars followed by bindings
                                          // if we disallow rebinding, don't need bindings
         L<S> x(at(n, y));                // names of such
@@ -422,7 +422,7 @@ namespace {
         // At the bottom of p. 140, Hsu says using r[b] instead of b is the
         // right way. I must be doing something different, because using b is
         // getting the result I want, and r[b] isn't.
-        O not_found(converge_(closest_binding, L<O>{cat(v,b), O(tili(x.size()))}));
+        O not_found(converge(closest_binding, L<O>{cat(v,b), O(tili(x.size()))}));
         L<I> f(frames["frame"_s]);
         L<I> fi(at(f, i));
         L<I> si(at(slots, i));

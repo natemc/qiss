@@ -62,9 +62,12 @@ std::size_t write_date::write(char* buf, D x) {
 std::size_t write_double::write(char* buf, double x) {
     if      (std::isnan(x)) return rite(buf, "0n");
     else if (std::isinf(x)) return x < 0? rite(buf, "-0w") : rite(buf, "0w");
-//    std::to_chars(buf, buf + 64, x, std::chars_format::general);
+// someday...
+//    const auto [p, err] = std::to_chars(buf, buf + 64, x, std::chars_format::general);
+//    assert(err == std::errc{});
+//    return std::size_t(p - buf);
     const int rc = snprintf(buf, 64, "%lg", x);
-    assert(0 < rc);
+    assert(rc > 0);
     return std::size_t(rc);
 }
 

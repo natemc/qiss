@@ -100,6 +100,7 @@ set(CORE
     src/sum.cpp
     src/sym.cpp
     src/symtrie.cpp
+    src/system.cpp
     src/take.cpp
     src/terminal_width.cpp
     src/type_pair.cpp

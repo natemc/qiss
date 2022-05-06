@@ -46,7 +46,6 @@ L<C>& operator<<(L<C>& buf, Opcode x) {
     case Opcode::count   : return buf << "#:";
     default              : return buf << char(x);
     }
-   
 }
 
 L<C>& operator<<(L<C>& buf, AO op) {

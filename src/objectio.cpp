@@ -41,7 +41,7 @@ namespace {
         case OT<T>::typei()     : return x->t.is_null()? h << x->t << 't' : h << x->t;
         case OT<X>::typei()     : return h << "0x" << x->x;
         case OT<AO>::typei()    : return h << x->ao;
-        case OT<AP>::typei()    : return h << x->ao;
+        case OT<AP>::typei()    : return h << OT<AP>::get(x.get());
         case OT<Opcode>::typei(): return h << x->op;
         case OT<bfun_t>::typei(): return h << "builtin";
         case -int(generic_null_type): return h << "::";
@@ -327,8 +327,6 @@ namespace {
     }
 
     template <class S> decltype(auto) print_object(S&& h, O x) {
-        assert(x);
-
         if      (x.is_atom()) print_atom (h, std::move(x));
         else if (x.is_dict()) print_dict (h, std::move(x));
         else if (x.is_list()) print_list (h, std::move(x));

@@ -28,6 +28,20 @@
 namespace {
     template <class X> using OT = ObjectTraits<X>;
 
+    bool is_numlit(Token t) {
+        constexpr Token numlit[] = {FLOAT, FLOAT_LIST, INT, INT_LIST, LONG, LONG_LIST};
+        return std::find(numlit, std::end(numlit), t) != std::end(numlit);
+    }
+
+    void neg(O& x) {
+#define CS(X) case -OT<X>::typei(): x.atom<X>() = -x.atom<X>(); break; \
+              case OT<X>::typei(): { L<X> lst(x); if (lst.size()) lst[0] = -lst[0]; break; }
+        switch (int(x.type())) {
+        CS(F); CS(I); CS(J);
+        default: assert(false);
+        }
+    }
+
     Adverb text2adverb(L<C> s) {
         assert(s.size() == 1 || s.size() == 2);
         if (s[0] == C('/'))
@@ -64,21 +78,22 @@ namespace {
         L<O>    val;
         index_t current = 0;
 
-        bool  is_infix(S x) const;
-        bool  are_uniform_literals(index_t first, index_t last);
-        void  consume();
-        void  expect(Token t);
-        bool  match(Token t);
-        bool  more() const;
-        bool  peek(Token t, int lookahead=0) const;
-        enum  Infix { INFIX };
-        bool  peek(Infix) const;
-        enum  Verb { VERB };
-        bool  peek(Verb) const;
+        index_t advance();
+        bool    are_uniform_literals(index_t first, index_t last);
+        void    consume();
+        Token   curr() const;
+        void    expect(Token t);
+        bool    is_infix(S x) const;
+        bool    match(Token t);
+        bool    more() const;
+        bool    peek(Token t, int lookahead=0) const;
+        enum    Infix { INFIX };
+        bool    peek(Infix) const;
+        enum    Verb { VERB };
+        bool    peek(Verb) const;
 
 #ifndef NDEBUG
-        Token curr() const;
-//        void debug_print();
+        void debug_print();
         void enter(const char* rule) const;
         bool leave(const char* rule, bool result);
         index_t indent;
@@ -113,7 +128,7 @@ namespace {
         // token columns?
         L<X> depth;
         L<O> nodes;    // In Hsu, name or reference data
-        L<X> types;
+        L<C> types;
         // L<X> kinds; // aka sub-types.  Why separate types and sub-types?
                        // So we can search for a class of nodes faster.
     };
@@ -167,17 +182,24 @@ namespace {
                            if (!r) { current = save__; trunc(start__); } \
                            return leave(rule__, r); } while (false)
 
+    index_t Parser::advance() {
+        assert(more());
+        --current;
+        if (more() && curr() == WHITESPACE) --current;
+        return current;
+    }
+
     Token Parser::curr() const {
         assert(more());
         return Token(C::rep(type[current]));
     }
 
-/*    void Parser::debug_print() {
+    void Parser::debug_print() {
         L<S> k{"type"_s, "node"_s, "depth"_s};
         L<O> v{O(types)   , O(nodes)   , O(depth)};
         O t(make_table(make_dict(k.release(), v.release())));
         L<C> s;
-        s << t.get();
+        s << t;
         const L<C> i(indent, ' ');
         H(1) << i;
         for (C c: s) {
@@ -185,7 +207,7 @@ namespace {
             if (c == C('\n')) H(1) << i;
         }
         H(1) << '\n' << flush;
-    }*/
+    }
 
     void Parser::enter(const char* rule) const {
         if (trace) {
@@ -221,14 +243,27 @@ namespace {
 #endif
 
     void Parser::push_back(TokenInfo t) {
-        line.emplace_back(t.line);
-        text.emplace_back(t.text, t.text + strlen(t.text));
-        type.emplace_back(t.type);
-        val .emplace_back(t.value? t.value : generic_null());
+        // Handle negative numeric literals, e.g., -5 or 4--4
+        if (type.size() && C::rep(type.back()) == OPERATOR
+         && text.back().size() == 1 && text.back()[0] == C('-')
+         && is_numlit(t.type)
+         && (type.size() == 1
+             || C::rep(type[type.size() - 2]) == OPERATOR
+             || C::rep(type[type.size() - 2]) == RBRACE))
+        {
+            type.back() = C(t.type);
+            neg(val.back() = O(t.value));
+            text.back() = L<C>(t.text, t.text + strlen(t.text));
+        } else {
+            line.emplace_back(t.line);
+            text.emplace_back(t.text, t.text + strlen(t.text));
+            type.emplace_back(t.type);
+            val .emplace_back(t.value? t.value : generic_null());
+        }
     }
 
     void Parser::consume() {
-        match(Token(C::rep(type[current])));
+        match(curr());
     }
 
     void Parser::expect(Token t) {
@@ -240,14 +275,14 @@ namespace {
     }
 
     bool Parser::are_uniform_literals(index_t first, index_t last) {
-        const auto is_lit = [] (X t){ return t == X(X::rep(Ast::lit)); };
+        const auto is_lit = [] (C t){ return t == C(C::rep(Ast::lit)); };
         return are_uniform_atoms(nodes.begin() + first, nodes.begin() + last)
             && std::all_of(types.begin() + first, types.begin() + last, is_lit);
     }
 
     bool Parser::match(Token t) {
         if (!peek(t)) return false;
-        --current;
+        advance();
         return true;
     }
 
@@ -419,7 +454,7 @@ namespace {
                         // id node with the bind node.
                         O id(nodes.back());
                         pop();
-                        types.back() = X(X::rep(Ast::bind));
+                        types.back() = C(C::rep(Ast::bind));
                         nodes.back() = id;
                     }
                     deepen(n, depth.size());
@@ -464,7 +499,7 @@ namespace {
             else if (types.back() == Ast::id) formals = L<S>{nodes.back()->s};
             else LEAVE(false);
             nodes.back() = formals;
-            types.back() = X(X::rep(Ast::formals));
+            types.back() = C(C::rep(Ast::formals));
         } else if (8 < nodes.size() - start) {
             throw Exception("limit: functions have a max of 8 parameters");
         }
@@ -513,14 +548,14 @@ namespace {
         expect(LBRACE);
         if (types.back() != Ast::formals) implicit_formals(k);
         deepen(k, depth.size() - 1);
-        types.back() = X(X::rep(Ast::lambda));
+        types.back() = C(C::rep(Ast::lambda));
         LEAVE(true);
     }
 
     bool Parser::noun() {
         ENTER(noun);
-        switch (C::rep(type[current])) {
-        case IDENTIFIER: push_back(O(sym(text[current--])), Ast::id); break;
+        switch (curr()) {
+        case IDENTIFIER: push_back(O(sym(text[current])), Ast::id); advance(); break;
         case RBRACE    : LEAVE(lambda());
         case RBRACKET  : {
             consume();
@@ -541,7 +576,7 @@ namespace {
             if (types.back() == Ast::op && nodes.back()->op == Opcode::cast && kids >= 3) {
                 if (kids % 2 == 0) throw Exception("$ (switch) requires odd # of args");
                 nodes.back() = O(I(I::rep(kids)));
-                types.back() = X(X::rep(Ast::cond));
+                types.back() = C(C::rep(Ast::cond));
                 deepen(k, nodes.size() - 1);
             }
             else {
@@ -576,7 +611,8 @@ namespace {
             expect(LPAREN);
             break;
         case KEYWORD: {
-            const S keyword = sym(text[current--]);
+            const S keyword = sym(text[current]);
+            advance();
             if (keyword == "export"_s) {
                 // TODO enforce that export can only be at the top level scope
                 if (types.back() != Ast::bind)
@@ -590,7 +626,8 @@ namespace {
             break;
             }
         default:
-            push_back(val[current--], Ast::lit);
+            push_back(val[current], Ast::lit);
+            advance();
         }
         LEAVE(true);
     }
@@ -608,7 +645,7 @@ namespace {
     void Parser::push_back(O node, Ast node_type) {
         depth.emplace_back(X::rep(0));
         nodes.emplace_back(std::move(node));
-        types.emplace_back(X::rep(node_type));
+        types.emplace_back(C::rep(node_type));
     }
 
     void Parser::rotate(index_t first, index_t middle) {
@@ -710,7 +747,7 @@ namespace {
         std::transform(depth.begin() + i, depth.end(), kdepth.begin(),
                        [=](X d) { return d - (mvc? 2 : 1); });
         L<O> knodes(nodes.begin() + i, nodes.end());
-        L<X> ktypes(types.begin() + i, types.end());
+        L<C> ktypes(types.begin() + i, types.end());
         trunc(i);
 
         build_value_table();
@@ -748,7 +785,8 @@ namespace {
             const index_t k = nodes.size();
             X d(0);
             for (; peek(ADVERB); d = d + 1) {
-                const X adverb(X::rep(text2adverb(text[current--])));
+                const X adverb(X::rep(text2adverb(text[current])));
+                advance();
                 push_back(O(adverb), Ast::adverb);
                 depth.back() = d;
             }
@@ -761,10 +799,12 @@ namespace {
             rotate(k, m);
             LEAVE(true);
         } else if (peek(OPERATOR)) {
-            push_back(val[current--], Ast::op);
+            push_back(val[current], Ast::op);
+            advance();
             LEAVE(true);
         } else if (peek(INFIX)) {
-            push_back(val[current--], Ast::infix);
+            push_back(val[current], Ast::infix);
+            advance();
             LEAVE(true);
         }
         LEAVE(false);

@@ -112,6 +112,10 @@ void qiss_print() {
     lalloc.print();
 }
 
+void qiss_print_old() {
+    lalloc.print_old();
+}
+
 extern "C" {
     void* qiss_malloc(size_t sz) {
         return lalloc.alloc(sz).first;

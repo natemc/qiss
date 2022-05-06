@@ -16,6 +16,7 @@ struct VisibleBuddyAllocator {
     [[nodiscard]] uint64_t                   used ()                           const;
 
     void print() const;
+    void print_old() const;
 
     typedef BuddyAllocator::Block    Block;
     typedef BuddyAllocator::bucket_t bucket_t;
@@ -26,5 +27,5 @@ struct VisibleBuddyAllocator {
 
 private:
     struct Alloc { uint64_t i; void* p; uint64_t sz; }* allocs;
-    uint64_t allocs_sz;
+    uint64_t i, allocs_sz;
 };

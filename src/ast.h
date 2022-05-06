@@ -3,29 +3,26 @@
 #include <cstdint>
 #include <prim.h>
 
-enum class Ast: uint8_t {
-    adverb  = 'A',
-    apply   = 'a',
+enum class Ast: char {
+    adverb  = 'a',
+    apply   = 'A',
     bind    = ':',
     cond    = '$',
     export_ = '+',
-    exprs   = 'E',
     formals = 'f',
     hole    = 'h',
-    id      = 'I',
-    infix   = 'i',
-    list    = 'L',
-    juxt    = 'J',
+    id      = 'i',
+    infix   = 'I',
+    list    = 'e',
+    juxt    = 'j',
     lambda  = 'l',
-    lit     = 'n',
-    module  = 'M',
-    op      = 'O',
+    lit     = 'L',
+    module  = 'm',
+    op      = 'o',
     ref     = 'r',
-    ret     = 'R',
-    stmts   = 'S',
 };
 
-inline bool operator==(Ast x, X   y) { return X(X::rep(x)) == y; }
-inline bool operator==(X x  , Ast y) { return y == x; }
-inline bool operator!=(Ast x, X   y) { return !(x == y); }
-inline bool operator!=(X x  , Ast y) { return y != x; }
+inline bool operator==(Ast x, C   y) { return C(C::rep(x)) == y; }
+inline bool operator==(C x  , Ast y) { return y == x; }
+inline bool operator!=(Ast x, C   y) { return !(x == y); }
+inline bool operator!=(C x  , Ast y) { return y != x; }

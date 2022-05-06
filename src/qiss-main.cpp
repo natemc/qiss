@@ -12,6 +12,7 @@
 #include <qiss_alloc.h>
 #include <read_file.h>
 #include <sym.h>
+#include <system.h>
 #include <unistd.h>
 
 namespace {
@@ -69,11 +70,9 @@ int main(int argc, char* argv[]) {
                     if (result->type != generic_null_type)
                         H(1) << result << '\n' << flush;
                 } else if (1 < cmd.size()) {
-                    if (cmd[1] == C('m')) {
-                        qiss_print();
-                    } else {
-                        H(1) << "nyi\n";
-                    }
+                    const O result(system_(cmd));
+                    if (result->type != generic_null_type)
+                        H(1) << result << '\n' << flush;
                 }
             }
         } catch (const Exception& e) {

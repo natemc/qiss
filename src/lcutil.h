@@ -27,7 +27,6 @@ L<C>& operator<<(L<C>& buf, J              x);
 L<C>& operator<<(L<C>& buf, S              x);
 L<C>& operator<<(L<C>& buf, T              x);
 L<C>& operator<<(L<C>& buf, X              x);
-L<C>& operator<<(L<C>& buf, const Object*  x);
 L<C>& operator<<(L<C>& buf, Adverb         x);
 L<C>& operator<<(L<C>& buf, Opcode         x);
 L<C>& operator<<(L<C>& buf, AO             x);

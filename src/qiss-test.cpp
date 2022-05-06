@@ -350,7 +350,9 @@ TEST_CASE("unary * is first") {
 
 TEST_CASE("unary - is negate") {
     INTERP(J(-4)          , "-(4)");
+    INTERP(J(4)           , "4--4--4");
     INTERP(L<J>({0,-2,-4}), "-(0 2 4)");
+    INTERP(L<J>({0,-2,-4}), "- 0 2 4");
     INTERP(UKV(vsym("abc"), L<J>{0,-1,-2}), "-`a`b`c!0 1 2");
     INTERP(+UKV(vsym("ab"), L<L<J>>{L<J>{0,-1,-2},L<J>{10,20,30}}),
            "-([]a:0 1 2;b:-10 -20 -30)");

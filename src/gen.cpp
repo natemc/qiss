@@ -3,7 +3,6 @@
 #include <arith.h>
 #include <ast.h>
 #include <at.h>
-#include <binary2unary.h>
 #include <bit>
 #include <disassemble.h>
 #include <exception.h>
@@ -228,7 +227,7 @@ namespace {
     // This may turn out to be handy
     L<X> write_fun(O ast_, I root) {
         KV<S,O> ast    (addref(ast_->dict));
-        L<X>    t      (ast["type"_s]);
+        L<C>    t      (ast["type"_s]);
         L<O>    n      (ast["node"_s]);
         L<I>    p      (ast["parent"_s]);
         L<X>    k      (ast["kids"_s]);
@@ -237,7 +236,7 @@ namespace {
         L<X>    r;
         for (I b: body) {
             if (b == root) break;
-            switch (Ast(X::rep(t[b]))) {
+            switch (Ast(C::rep(t[b]))) {
             case Ast::id: {
                 auto it = std::find(formals.begin(), formals.end(), n[b].atom<S>());
                 if (it == formals.end()) throw Exception("nyi: free vars");
@@ -255,7 +254,7 @@ namespace {
 
     KV<I,L<X>> write_funs(O ast_) {
         KV<S,O>    ast   (+ast_);
-        L<X>       t     (ast["type"_s]);
+        L<C>       t     (ast["type"_s]);
         L<I>       funs  (&(t == X::rep(Ast::lambda)));
         KV<I,L<X>> r;
         for (I root: funs) r.add(root, write_fun(ast_, root));
@@ -279,7 +278,7 @@ void gen(KV<S,O>& module, O ast_, bool trace) {
     L<O>    n            (ast["node"_s]);
     L<I>    p            (ast["parent"_s]);
     L<I>    s            (ast["slot"_s]);
-    L<X>    t            (ast["type"_s]);
+    L<C>    t            (ast["type"_s]);
     KV<I,I> blocks; // block # (parent) -> first instruction
     L<I>    calls;
     L<I>    procs;
@@ -294,7 +293,7 @@ void gen(KV<S,O>& module, O ast_, bool trace) {
         const I fb(t[block] == Ast::lambda? f[block] : I(0));
         if (fb) write(code, Opcode::bump, X::rep(I::rep(fb)));
         for (; i < t.size() && p[i] == block; ++i) {
-            switch (Ast(X::rep(t[i]))) {
+            switch (Ast(C::rep(t[i]))) {
             case Ast::adverb:
                 write_adverb(code, Adverb(X::rep(n[i].atom<X>())));
                 if (X(1) < k[i]) write_invoke(code, I(X::rep(k[i] - 1)));
@@ -409,7 +408,7 @@ void gen(KV<S,O>& module, O ast_, bool trace) {
             case Ast::ref   : {
                 const I ref = n[i].atom<I>();
                 if (i < t.size() - 1) {
-                    const Ast succ{X::rep(t[i+1])};
+                    const Ast succ{C::rep(t[i+1])};
                     if (t[ref] == Ast::lambda) {
                         const index_t arity = L<S>(n[ref]).size();
                         if (succ == Ast::juxt || succ == Ast::apply) {

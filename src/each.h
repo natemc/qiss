@@ -4,10 +4,13 @@
 #include <enlist.h>
 #include <exception.h>
 #include <l.h>
+#include <lambda.h>
 #include <lcutil.h>
 #include <o.h>
+#include <object.h>
 #include <objectio.h>
 #include <primio.h>
+#include <type_pair.h>
 #include <type_traits>
 #include <ukv.h>
 #include <utility>
@@ -20,7 +23,7 @@ O each_right(bfun_t f, O x, O y);
 const struct Each {
     template <class X> using OT = ObjectTraits<X>;
 
-    template <class F, class X>
+    template <class F, class X> requires std::is_invocable_v<F, X>
     O operator()(F&& f, L<X> x) const {
         using R = decltype(f(x[0]));
         if constexpr(std::is_same_v<R,O>)
@@ -36,7 +39,7 @@ const struct Each {
         return O(std::move(r));
     }
 
-    template <class F>
+    template <class F> requires std::is_invocable_v<F, O>
     O operator()(F&& f, L<O> x) const {
         using R = decltype(f(x[0]));
         if constexpr(std::is_same_v<R,O>)
@@ -50,14 +53,11 @@ const struct Each {
     O operator()(FUN&& f, O x) const {
         if (x.is_dict()) return (*this)(std::forward<FUN>(f), UKV(std::move(x)));
 #define CS(X) case OT<X>::typei(): return (*this)(std::forward<FUN>(f), L<X>(std::move(x)))
-        switch (int(x->type)) {
+        switch (int(x.type())) {
         CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J);
         CS(S); CS(T); CS(X); CS(O);
-        default: {
-            L<C> s;
-            s << "Unexpected type in each: " << int(x->type) << '\n';
-            throw lc2ex(s);
-        }
+        // TODO handle table
+        default: throw Exception("nyi unary each");
         }
 #undef CS
     }
@@ -68,7 +68,7 @@ const struct Each {
         return UKV(std::move(k), (*this)(std::forward<F>(f), std::move(v)));
     }
 
-    template <class F, class X, class Y>
+    template <class F, class X, class Y> requires std::is_invocable_v<F, X, Y>
     O operator()(F&& f, L<X> x, L<Y> y) const {
         if (x.size() != y.size()) throw Exception("length: each both");
         using R = decltype(f(x[0], y[0]));
@@ -200,10 +200,87 @@ private:
     }
 } each;
 
+const struct EachBox1 {
+    template <class X> using OT = ObjectTraits<X>;
+
+    template <class F, class X> requires std::is_invocable_v<F, O>
+    O operator()(F f, L<X> x) const {
+        return each(L1(f(O(x))), std::move(x));
+    }
+
+    template <class F> requires std::is_invocable_v<F, O>
+    O operator()(F&& f, Dict* x) const {
+        return O(make_dict(addref(dk(x)),
+                           (*this)(std::forward<F>(f), O(addref(dv(x)))).release()));
+    }
+
+    template <class FUN> requires std::is_invocable_v<FUN, O>
+    O operator()(FUN&& f, O x) const {
+        if (x.is_dict()) return (*this)(std::forward<FUN>(f), dict(x.get()));
+#define CS(X) case OT<X>::typei(): return (*this)(std::forward<FUN>(f), L<X>(std::move(x)))
+        switch (int(x.type())) {
+        CS(B); CS(C); CS(D); CS(F); CS(H); CS(I); CS(J);
+        CS(S); CS(T); CS(X);
+        case OT<O>::typei():
+            return each(std::forward<FUN>(f), L<O>(std::move(x)));
+        // TODO handle dict, table
+        default: throw Exception("nyi unary each");
+        }
+#undef CS
+    }
+} eachbox1;
+
+const struct EachBox2 {
+    template <class X> using OT = ObjectTraits<X>;
+
+    template <class F, class X, class Y> requires std::is_invocable_v<F, O, O>
+    O boxboth(F f, L<X> x, L<Y> y) const {
+        return each(L2(f(O(x), O(y))), x, y);
+    }
+
+    template <class F, class X> requires std::is_invocable_v<F, O, O>
+    O boxx(F f, L<X> x, L<O> y) const {
+        return each(L2(f(O(x), std::move(y))), std::move(x), std::move(y));
+    }
+
+    template <class F, class Y> requires std::is_invocable_v<F, O, O>
+    O boxy(F f, L<O> x, L<Y> y) const {
+        return each(L2(f(std::move(x), O(y))), std::move(x), std::move(y));
+    }
+
+    template <class FUN> requires std::is_invocable_v<FUN, O, O>
+    O operator()(FUN f, O x, O y) const {
+        if      (x.is_atom())
+            return y.is_atom()? f(std::move(x), std::move(y))
+                :  /* else */   eachbox1([&](auto e){ return f(e, y); }, std::move(x));
+        else if (y.is_atom()) return eachbox1([&](auto e){ return f(x, e); }, std::move(y));
+#define BB(X,Y)                                                                        \
+    case TypePair<X,Y>::LL: return boxboth(f, L<X>(std::move(x)), L<Y>(std::move(y)))
+#define BO(X)                                                                          \
+    case TypePair<X,O>::LL: return boxx   (f, L<X>(std::move(x)), L<O>(std::move(y))); \
+    case TypePair<O,X>::LL: return boxy   (f, L<O>(std::move(x)), L<X>(std::move(y)))
+#define AA(Z) BB(Z,B); BB(Z,C); BB(Z,D); BB(Z,F); BB(Z,H); BB(Z,I); \
+              BB(Z,J); BB(Z,S); BB(Z,T); BB(Z,X)
+        switch (type_pair(x, y)) {
+        AA(B); AA(C); AA(D); AA(F); AA(H); AA(I); AA(J);
+        AA(S); AA(T); AA(X);
+        BO(B); BO(C); BO(D); BO(F); BO(H); BO(I); BO(J);
+        BO(S); BO(T); BO(X);
+        case TypePair<O,O>::LL:
+            return each(f, L<O>(std::move(x)), L<O>(std::move(y)));
+        // TODO handle dict, table
+        default: throw Exception("nyi binary each");
+        }
+#undef AA
+#undef BB
+#undef BO
+    }
+} eachbox2;
+
 const struct EachL {
-    template <class F, class X, class Y>
+    template <class F, class X, class Y> requires std::is_invocable_v<F, X, Y>
     auto operator()(F f, L<X> x, const Y& y) const {
-        return each([&](auto& e){ return f(e, y); }, std::move(x));
+        return each([&](auto e){ return f(e, y); }, std::move(x));
     }
 
     auto operator()(bfun_t f, O x, O y) const {
@@ -212,9 +289,9 @@ const struct EachL {
 } eachL;
 
 const struct EachR {
-    template <class F, class X, class Y>
+    template <class F, class X, class Y> requires std::is_invocable_v<F, X, Y>
     auto operator()(F f, const X& x, L<Y> y) const {
-        return each([&](auto& e){ return f(x, e); }, std::move(y));
+        return each([&](auto e){ return f(x, e); }, std::move(y));
     }
 
     auto operator()(bfun_t f, O x, O y) const {
