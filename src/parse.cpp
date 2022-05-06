@@ -182,18 +182,6 @@ namespace {
                            if (!r) { current = save__; trunc(start__); } \
                            return leave(rule__, r); } while (false)
 
-    index_t Parser::advance() {
-        assert(more());
-        --current;
-        if (more() && curr() == WHITESPACE) --current;
-        return current;
-    }
-
-    Token Parser::curr() const {
-        assert(more());
-        return Token(C::rep(type[current]));
-    }
-
     void Parser::debug_print() {
         L<S> k{"type"_s, "node"_s, "depth"_s};
         L<O> v{O(types)   , O(nodes)   , O(depth)};
@@ -262,8 +250,20 @@ namespace {
         }
     }
 
+    index_t Parser::advance() {
+        assert(more());
+        --current;
+        if (more() && curr() == WHITESPACE) --current;
+        return current;
+    }
+
     void Parser::consume() {
         match(curr());
+    }
+
+    Token Parser::curr() const {
+        assert(more());
+        return Token(C::rep(type[current]));
     }
 
     void Parser::expect(Token t) {
